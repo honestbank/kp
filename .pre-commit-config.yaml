@@ -1,0 +1,29 @@
+# DO NOT CHANGE. This file is being managed from a central repository
+# To know more simply visit https://github.com/honestbank/.github/blob/main/docs/about.md
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: detect-aws-credentials
+        args: [ '--allow-missing-credentials' ]
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.39.0
+    hooks:
+      - id: golangci-lint
+  - repo: https://github.com/TekWizely/pre-commit-golang
+    rev: v0.8.2
+    hooks:
+      - id: go-imports
+  - repo: local
+    hooks:
+      - id: generate-mocks
+        name: generate-mocks
+        entry: bash -c 'make generate'
+        language: system
+        types: [ bash ]
+        pass_filenames: false
+        always_run: true

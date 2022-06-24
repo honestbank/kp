@@ -6,7 +6,7 @@ import (
 	"github.com/Shopify/sarama"
 )
 
-type Consumer interface {
+type KPConsumer interface {
 	Setup(sarama.ConsumerGroupSession) error
 	Cleanup(sarama.ConsumerGroupSession) error
 	ConsumeClaim(sarama.ConsumerGroupSession, sarama.ConsumerGroupClaim) error
@@ -17,15 +17,15 @@ type ConsumerStruct struct {
 	topic           string
 	deadLetterTopic string
 	ready           chan bool
-	processor       func(message string) error
+	Processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 	producer        KPProducer
 	retries         int
 }
 
-func NewConsumer(topic string, deadLetterTopic string, retries int, processor func(message string) error, producer KPProducer) ConsumerStruct {
+func NewConsumer(topic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer) ConsumerStruct {
 	return ConsumerStruct{
 		ready:           make(chan bool),
-		processor:       processor,
+		Processor:       processor,
 		producer:        producer,
 		topic:           topic,
 		deadLetterTopic: deadLetterTopic,
@@ -44,11 +44,36 @@ func (consumer *ConsumerStruct) SetReady(ready chan bool) {
 func (consumer *ConsumerStruct) Setup(sarama.ConsumerGroupSession) error {
 	// Mark the consumer as ready
 	close(consumer.ready)
+
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
 func (consumer *ConsumerStruct) Cleanup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) error {
+	unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
+	if err != nil {
+		log.Printf("Error unmarshaling message: %v", err)
+
+		return err
+	}
+	if retries >= consumer.retries {
+		log.Printf("Message has exceeded retries, sending to dead letter topic")
+
+		return nil
+	}
+	err = consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
+	if err != nil {
+		marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
+		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), marshaledMessage)
+		if err != nil {
+			log.Println("ERROR OCCURRED")
+		}
+	}
+
 	return nil
 }
 
@@ -61,23 +86,9 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 		select {
 		case message := <-claim.Messages():
 			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
-			unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
+			err := consumer.ProcessMessage(message)
 			if err != nil {
-				log.Printf("Error unmarshaling message: %v", err)
-			}
-			if retries >= consumer.retries {
-				log.Printf("Message has exceeded retries, sending to dead letter topic")
-				session.MarkMessage(message, "")
-				return nil
-			}
-			err = consumer.processor(unmarshaledMessage)
-			if err != nil {
-
-				marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
-				err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), marshaledMessage)
-				if err != nil {
-					log.Println("ERROR OCCURED")
-				}
+				log.Printf("Error processing message: %v", err)
 			}
 			session.MarkMessage(message, "")
 

@@ -455,3 +455,6 @@ config/*.json
 # test log file
 coverage.txt
 coverage.tmp
+
+#ignore mocks
+mocks

@@ -10,34 +10,32 @@ import (
 	"syscall"
 
 	"github.com/Shopify/sarama"
-
-	"github.com/honestbank/kp/examples/simple/config"
 )
 
-type kakfaProcessor struct {
+type KP struct {
 	consumer        ConsumerStruct
 	topic           string
 	retries         int
 	deadLetterTopic string
-	kafkaConfig     *config.KafkaConfig
+	kafkaConfig     KafkaConfig
 	producer        KPProducer
 }
 
-func NewKafkaProcessor(topic string, deadLetterTopic string, retries int, kafkaConfig *config.KafkaConfig) KafkaProcessor {
-	return &kakfaProcessor{
+func NewKafkaProcessor(topic string, deadLetterTopic string, retries int, kafkaConfig KafkaConfig) KafkaProcessor {
+	return &KP{
 		topic:           topic,
 		deadLetterTopic: deadLetterTopic,
 		retries:         retries,
 		kafkaConfig:     kafkaConfig,
-		producer:        GetProducer(),
+		producer:        GetProducer(kafkaConfig),
 	}
 }
 
-func (k *kakfaProcessor) Process(processor func(message string) error) {
+func (k *KP) Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
 	k.consumer = NewConsumer(k.topic, k.deadLetterTopic, k.retries, processor, k.producer)
 }
 
-func (k *kakfaProcessor) Start() {
+func (k *KP) Start() {
 	group := "test"
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")

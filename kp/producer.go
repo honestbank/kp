@@ -2,14 +2,12 @@ package kp
 
 import (
 	"github.com/Shopify/sarama"
-
-	"github.com/honestbank/kp/examples/simple/config"
 )
 
 var kpprodcer *Producer
 
 type KPProducer interface {
-	GetProducer() *Producer
+	GetProducer(kafkaConfig KafkaConfig) *Producer
 	ProduceMessage(topic string, key string, message string) error
 }
 
@@ -17,24 +15,22 @@ type Producer struct {
 	producer sarama.SyncProducer
 }
 
-func NewProducer() KPProducer {
-	config, err := config.LoadConfig()
-	if err != nil {
-		panic(err)
-	}
+func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 	if kpprodcer == nil {
 		saramaConfig := sarama.NewConfig()
 		saramaConfig.Producer.Partitioner = sarama.NewRandomPartitioner
 		saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
 		saramaConfig.Producer.Return.Successes = true
-		producer, err := sarama.NewSyncProducer([]string{config.KafkaConfig.KafkaBootstrap}, saramaConfig)
+		producer, err := sarama.NewSyncProducer([]string{kafkaConfig.KafkaBootstrap}, saramaConfig)
 		if err != nil {
 			panic(err)
 		}
+
 		return &Producer{
 			producer: producer,
 		}
 	}
+
 	return kpprodcer
 }
 
@@ -48,17 +44,19 @@ func (p *Producer) ProduceMessage(topic string, key string, message string) erro
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (p *Producer) GetProducer() *Producer {
+func (p *Producer) GetProducer(kafkaConfig KafkaConfig) *Producer {
 	return p
 }
 
-func GetProducer() *Producer {
+func GetProducer(kafkaConfig KafkaConfig) *Producer {
 	if kpprodcer == nil {
-		producer := NewProducer()
-		kpprodcer = producer.GetProducer()
+		producer := NewProducer(kafkaConfig)
+		kpprodcer = producer.GetProducer(kafkaConfig)
 	}
+
 	return kpprodcer
 }

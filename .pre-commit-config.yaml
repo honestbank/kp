@@ -18,12 +18,3 @@ repos:
     rev: v0.8.2
     hooks:
       - id: go-imports
-  - repo: local
-    hooks:
-      - id: generate-mocks
-        name: generate-mocks
-        entry: bash -c 'make generate'
-        language: system
-        types: [ bash ]
-        pass_filenames: false
-        always_run: true

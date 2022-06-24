@@ -1,0 +1,43 @@
+{
+  "Prometheus": {
+    "push_gateway_host": "localhost:9091"
+  },
+  "Traces": {
+    "URL": "http://localhost:14268/api/traces"
+  },
+  "DB": {
+    "Host": "localhost",
+    "User": "dbuser",
+    "Password": "dbpass",
+    "Name": "my_db",
+    "Port": 3306
+  },
+  "KafkaConfig": {
+    "KafkaBootstrap": "localhost:9092",
+    "KafkaTopicOutput": "card-lifecycle-request",
+    "CardCreationTopic": "card-creation-response",
+    "CardReplacementTopic": "card-replacement",
+    "CardRenewalTopic"   : "card-renewal"
+  },
+  "CoreAPI": {
+    "BaseURL": "localhost:8081/"
+  },
+  "Anteraja": {
+    "BaseURL": "https://doit-sit.anteraja.id/honestbank",
+    "SecretAccessKey": "SYRzSiaro+a9U0wa5munOw==",
+    "AccessKeyID": "Anteraja_x_honestbank_SIT",
+    "TimeZone": "Asia/Bangkok"
+  },
+  "GqlClientConfig": {
+    "Endpoint": "http://localhost:1338/"
+  },
+  "Shipper":{
+    "Name": "Honest Indonesia",
+    "Phone": "81283977964",
+    "Email": "",
+    "District": "35.15.17",
+    "Address": "Jalan Raya Betro No. 21, Betro, Sedati, Sidoarjo",
+    "PostalCode": "61253",
+    "GeoLoc": ""
+  }
+}

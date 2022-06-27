@@ -104,7 +104,7 @@ func TestNewConsumer(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
-		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
+		producer.EXPECT().ProduceMessage("retry-test", gomock.Any(), gomock.Any()).Return(nil)
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
@@ -134,7 +134,7 @@ func TestNewConsumer(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
-		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
+		producer.EXPECT().ProduceMessage("retry-test", gomock.Any(), gomock.Any()).Return(nil)
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {

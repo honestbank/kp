@@ -43,7 +43,7 @@ jobs:
         run: docker compose up -d
       - name: wait for kafka
         run: |
-          ports = (9092 9093 9094)
+          ports=(9092 9093 9094)
           for port in $ports
           do
             nc -z localhost $port

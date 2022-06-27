@@ -19,6 +19,7 @@ type KP struct {
 	deadLetterTopic string
 	kafkaConfig     KafkaConfig
 	producer        KPProducer
+	client          sarama.ConsumerGroup
 }
 
 func NewKafkaProcessor(topic string, deadLetterTopic string, retries int, kafkaConfig KafkaConfig) KafkaProcessor {
@@ -50,6 +51,7 @@ func (k *KP) Start() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	client, err := sarama.NewConsumerGroup(strings.Split(k.kafkaConfig.KafkaBootstrap, ","), group, saramaConfig)
+	k.client = client
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +65,7 @@ func (k *KP) Start() {
 			// `Consume` should be called inside an infinite loop, when a
 			// server-side rebalance happens, the consumer session will need to be
 			// recreated to get the new claims
-			if err := client.Consume(ctx, []string{k.topic, k.deadLetterTopic}, &k.consumer); err != nil {
+			if err := k.client.Consume(ctx, []string{k.topic, k.deadLetterTopic}, &k.consumer); err != nil {
 				log.Panicf("Error from consumer: %v", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop
@@ -100,6 +102,11 @@ func (k *KP) Start() {
 	if err = client.Close(); err != nil {
 		log.Panicf("Error closing client: %v", err)
 	}
+}
+
+func (k *KP) Stop() {
+	log.Println("Stopping Kafka consumer")
+	k.client.Close()
 }
 
 func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {

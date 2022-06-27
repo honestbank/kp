@@ -10,14 +10,14 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/kp"
+	kp2 "github.com/honestbank/kp"
 )
 
-var kafkaConfig = kp.KafkaConfig{
+var kafkaConfig = kp2.KafkaConfig{
 	KafkaBootstrapServers: "localhost:9092",
 }
 
-var producer = kp.NewProducer(kafkaConfig)
+var producer = kp2.NewProducer(kafkaConfig)
 
 type SafeCounter struct {
 	mu sync.Mutex
@@ -45,7 +45,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 	t.Run("test new kafka processor", func(t *testing.T) {
 		a := assert.New(t)
 
-		processor := kp.NewKafkaProcessor("test", "dead-test", 10, kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test", "dead-test", 10, kafkaConfig)
 		a.NotNil(processor)
 	})
 
@@ -53,7 +53,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		a := assert.New(t)
 		data := SafeCounter{v: make(map[string]int)}
 
-		processor := kp.NewKafkaProcessor("test", "dead-test", 10, kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test", "dead-test", 10, kafkaConfig)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("test")
 			if message == "fail" {
@@ -99,7 +99,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		a := assert.New(t)
 		data := SafeCounter{v: make(map[string]int)}
 
-		processor := kp.NewKafkaProcessor("test-fail", "dead-test-fail", 10, kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test-fail", "dead-test-fail", 10, kafkaConfig)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("fail")
 			if message == "fail" {

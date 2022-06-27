@@ -9,7 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/kp"
+	"github.com/honestbank/kp"
 	"github.com/honestbank/kp/mocks"
 )
 

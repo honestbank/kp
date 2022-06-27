@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/kp"
+	"github.com/honestbank/kp"
 )
 
 func TestUnmarshalStringMessage(t *testing.T) {

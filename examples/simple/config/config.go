@@ -65,11 +65,11 @@ type DatabaseConfig struct {
 }
 
 type KafkaConfig struct {
-	KafkaBootstrap       string `env:"CONFIG__KAFKA__BOOTSTRAP" default:"localhost:9092" json:"kafka_bootstrap"`
-	KafkaTopicOutput     string `env:"CONFIG__KAFKA__TOPIC_OUTPUT" default:"card-emboss-request" json:"kafka_topic_output"`
-	CardCreationTopic    string `env:"CONFIG__KAFKA__CARD_CREATION_TOPIC" required:"true"`
-	CardReplacementTopic string `env:"CONFIG__KAFKA__CARD_REPLACEMENT_TOPIC" required:"true"`
-	CardRenewalTopic     string `env:"CONFIG__KAFKA__CARD_RENEWAL_TOPIC" required:"true"`
+	KafkaBootstrapServers string `env:"CONFIG__KAFKA__BOOTSTRAP" default:"localhost:9092" json:"kafka_bootstrap"`
+	KafkaTopicOutput      string `env:"CONFIG__KAFKA__TOPIC_OUTPUT" default:"card-emboss-request" json:"kafka_topic_output"`
+	CardCreationTopic     string `env:"CONFIG__KAFKA__CARD_CREATION_TOPIC" required:"true"`
+	CardReplacementTopic  string `env:"CONFIG__KAFKA__CARD_REPLACEMENT_TOPIC" required:"true"`
+	CardRenewalTopic      string `env:"CONFIG__KAFKA__CARD_RENEWAL_TOPIC" required:"true"`
 }
 
 type ShipperConfig struct {
@@ -96,7 +96,7 @@ func LoadConfig() (*Config, error) {
 }
 
 func (c Config) GetKafkaBootstrap() []string {
-	return strings.Split(c.KafkaConfig.KafkaBootstrap, ",")
+	return strings.Split(c.KafkaConfig.KafkaBootstrapServers, ",")
 }
 
 func getConfigLocation() string {

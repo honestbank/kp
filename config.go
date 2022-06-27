@@ -5,5 +5,5 @@ type Config struct {
 }
 
 type KafkaConfig struct {
-	KafkaBootstrapServers string `json:"kafka_bootstrap"`
+	KafkaBootstrapServers []string `json:"kafka_bootstrap"`
 }

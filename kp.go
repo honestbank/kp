@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 
@@ -50,7 +49,7 @@ func (k *KP) Start() {
 	 */
 
 	ctx, cancel := context.WithCancel(context.Background())
-	client, err := sarama.NewConsumerGroup(strings.Split(k.kafkaConfig.KafkaBootstrapServers, ","), group, saramaConfig)
+	client, err := sarama.NewConsumerGroup(k.kafkaConfig.KafkaBootstrapServers, group, saramaConfig)
 	k.client = client
 	if err != nil {
 		panic(err)

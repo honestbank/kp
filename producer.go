@@ -21,7 +21,7 @@ func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 		saramaConfig.Producer.Partitioner = sarama.NewRandomPartitioner
 		saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
 		saramaConfig.Producer.Return.Successes = true
-		producer, err := sarama.NewSyncProducer([]string{kafkaConfig.KafkaBootstrapServers}, saramaConfig)
+		producer, err := sarama.NewSyncProducer(kafkaConfig.KafkaBootstrapServers, saramaConfig)
 		if err != nil {
 			panic(err)
 		}

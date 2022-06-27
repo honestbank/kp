@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	"strings"
 
 	"github.com/Shopify/sarama"
 
@@ -16,7 +17,7 @@ func main() {
 		panic(err)
 	}
 	// eventing.Setup(*cfg)
-	processor := kp.NewKafkaProcessor("test", "dead-test", 10, kp.KafkaConfig{KafkaBootstrapServers: cfg.KafkaConfig.KafkaBootstrapServers})
+	processor := kp.NewKafkaProcessor("test", "dead-test", 10, kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")})
 	processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 		if message == "fail" {
 			return errors.New("failed")

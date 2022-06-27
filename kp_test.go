@@ -14,7 +14,7 @@ import (
 )
 
 var kafkaConfig = kp2.KafkaConfig{
-	KafkaBootstrapServers: "localhost:9092",
+	KafkaBootstrapServers: []string{"localhost:9092"},
 }
 
 var producer = kp2.NewProducer(kafkaConfig)

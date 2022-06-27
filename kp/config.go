@@ -5,5 +5,5 @@ type Config struct {
 }
 
 type KafkaConfig struct {
-	KafkaBootstrap string `env:"CONFIG__KAFKA__BOOTSTRAP" default:"localhost:9092" json:"kafka_bootstrap"`
+	KafkaBootstrapServers string `json:"kafka_bootstrap"`
 }

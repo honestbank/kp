@@ -50,7 +50,7 @@ func (k *KP) Start() {
 	 */
 
 	ctx, cancel := context.WithCancel(context.Background())
-	client, err := sarama.NewConsumerGroup(strings.Split(k.kafkaConfig.KafkaBootstrap, ","), group, saramaConfig)
+	client, err := sarama.NewConsumerGroup(strings.Split(k.kafkaConfig.KafkaBootstrapServers, ","), group, saramaConfig)
 	k.client = client
 	if err != nil {
 		panic(err)

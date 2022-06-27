@@ -61,7 +61,7 @@ func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) 
 		return err
 	}
 	if retries >= consumer.retries {
-		log.Printf("Message has exceeded retries, sending to dead letter topic")
+		log.Printf("Message has exceeded retries, removing from kafka")
 
 		return nil
 	}

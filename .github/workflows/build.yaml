@@ -42,7 +42,10 @@ jobs:
       - name: docker-compose
         run: docker compose up -d
       - name: wait for kafka
-        run: apt update && apt install kafka -y && kafka-topics --bootstrap-server localhost:9092 --list
+        run: |
+          wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+          tar -xzf kafka_2.12-3.2.0.tgz
+          ./kafka_2.12-3.2.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
       - name: Test and generate code coverage
         run: go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
 

@@ -19,6 +19,28 @@ var kafkaConfig = kp.KafkaConfig{
 
 var producer = kp.NewProducer(kafkaConfig)
 
+type SafeCounter struct {
+	mu sync.Mutex
+	v  map[string]int
+}
+
+// Inc increments the counter for the given key.
+func (c *SafeCounter) Inc(key string) {
+	c.mu.Lock()
+	// Lock so only one goroutine at a time can access the map c.v.
+	c.v[key]++
+	c.mu.Unlock()
+}
+
+// Value returns the current value of the counter for the given key.
+func (c *SafeCounter) Value(key string) int {
+	c.mu.Lock()
+	// Lock so only one goroutine at a time can access the map c.v.
+	defer c.mu.Unlock()
+
+	return c.v[key]
+}
+
 func TestNewKafkaProcessor(t *testing.T) {
 	t.Run("test new kafka processor", func(t *testing.T) {
 		a := assert.New(t)
@@ -29,11 +51,11 @@ func TestNewKafkaProcessor(t *testing.T) {
 
 	t.Run("test process", func(t *testing.T) {
 		a := assert.New(t)
-		data := make([]string, 0)
+		data := SafeCounter{v: make(map[string]int)}
 
 		processor := kp.NewKafkaProcessor("test", "dead-test", 10, kafkaConfig)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
-			data = append(data, message)
+			data.Inc("test")
 			if message == "fail" {
 				return errors.New("failed")
 			}
@@ -71,15 +93,15 @@ func TestNewKafkaProcessor(t *testing.T) {
 		a.NoError(err)
 		time.Sleep(time.Second * 5)
 		close(quit)
-		a.Equal(3, len(data))
+		a.Equal(3, data.Value("test"))
 	})
 	t.Run("test process fail", func(t *testing.T) {
 		a := assert.New(t)
-		data := make([]string, 0)
+		data := SafeCounter{v: make(map[string]int)}
 
 		processor := kp.NewKafkaProcessor("test-fail", "dead-test-fail", 10, kafkaConfig)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
-			data = append(data, message)
+			data.Inc("fail")
 			if message == "fail" {
 				return errors.New("failed")
 			}
@@ -112,6 +134,6 @@ func TestNewKafkaProcessor(t *testing.T) {
 		_ = producer.ProduceMessage("test-fail", "1", "fail")
 		time.Sleep(time.Second * 5)
 		close(quit)
-		a.Equal(10, len(data))
+		a.Equal(10, data.Value("fail"))
 	})
 }

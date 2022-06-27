@@ -12,16 +12,12 @@ func UnmarshalStringMessage(message string) (string, int, error) {
 		return message, 0, nil
 	}
 
-	if findRetries[0] != "" {
-		retries, err := strconv.Atoi(findRetries[0][1:])
-		if err != nil {
-			return message, 0, err
-		}
-
-		return message[0 : len(message)-len(findRetries[0])], retries, nil
+	retries, err := strconv.Atoi(findRetries[0][1:])
+	if err != nil {
+		return message, 0, err
 	}
 
-	return message, 0, nil
+	return message[0 : len(message)-len(findRetries[0])], retries, nil
 }
 
 func MarshalStringMessage(message string, retries int) string {

@@ -458,3 +458,5 @@ coverage.tmp
 
 #ignore mocks
 mocks
+
+.idea

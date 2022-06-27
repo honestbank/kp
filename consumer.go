@@ -16,13 +16,14 @@ type KPConsumer interface {
 type ConsumerStruct struct {
 	topic           string
 	deadLetterTopic string
+	retryTopic      string
 	ready           chan bool
 	Processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 	producer        KPProducer
 	retries         int
 }
 
-func NewConsumer(topic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer) ConsumerStruct {
+func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer) ConsumerStruct {
 	return ConsumerStruct{
 		ready:           make(chan bool),
 		Processor:       processor,
@@ -30,6 +31,7 @@ func NewConsumer(topic string, deadLetterTopic string, retries int, processor fu
 		topic:           topic,
 		deadLetterTopic: deadLetterTopic,
 		retries:         retries,
+		retryTopic:      retryTopic,
 	}
 }
 
@@ -61,14 +63,18 @@ func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) 
 		return err
 	}
 	if retries >= consumer.retries {
-		log.Printf("Message has exceeded retries, removing from kafka")
+		log.Printf("Message has exceeded retries, sending to dead letter topic: %v", err)
+		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
+		if err != nil {
+			log.Printf("Error sending message to retry topic: %v", err)
+		}
 
 		return nil
 	}
 	err = consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
 	if err != nil {
 		marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
-		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), marshaledMessage)
+		err = consumer.producer.ProduceMessage(consumer.retryTopic, string(message.Key), marshaledMessage)
 		if err != nil {
 			log.Println("ERROR OCCURRED")
 		}

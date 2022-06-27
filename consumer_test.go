@@ -20,7 +20,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
 		}, producer)
 
@@ -33,7 +33,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
 		}, producer)
 
@@ -47,7 +47,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
 		}, producer)
 
@@ -66,7 +66,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
 		}, producer)
 
@@ -82,7 +82,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
 		}, producer)
 
@@ -106,7 +106,7 @@ func TestNewConsumer(t *testing.T) {
 		producer := mocks.NewMockKPProducer(ctrl)
 		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}
@@ -136,7 +136,7 @@ func TestNewConsumer(t *testing.T) {
 		producer := mocks.NewMockKPProducer(ctrl)
 		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}
@@ -165,7 +165,7 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}

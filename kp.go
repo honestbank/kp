@@ -14,6 +14,8 @@ import (
 type KP struct {
 	consumer        ConsumerStruct
 	topic           string
+	retryTopic      string
+	consumerGroup   string
 	retries         int
 	deadLetterTopic string
 	kafkaConfig     KafkaConfig
@@ -21,22 +23,23 @@ type KP struct {
 	client          sarama.ConsumerGroup
 }
 
-func NewKafkaProcessor(topic string, deadLetterTopic string, retries int, kafkaConfig KafkaConfig) KafkaProcessor {
+func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, retries int, consumerGroup string, kafkaConfig KafkaConfig) KafkaProcessor {
 	return &KP{
 		topic:           topic,
-		deadLetterTopic: deadLetterTopic,
+		deadLetterTopic: consumerGroup + "-" + deadLetterTopic,
+		retryTopic:      consumerGroup + "-" + retryTopic,
 		retries:         retries,
 		kafkaConfig:     kafkaConfig,
 		producer:        GetProducer(kafkaConfig),
+		consumerGroup:   consumerGroup,
 	}
 }
 
 func (k *KP) Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
-	k.consumer = NewConsumer(k.topic, k.deadLetterTopic, k.retries, processor, k.producer)
+	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, processor, k.producer)
 }
 
 func (k *KP) Start() {
-	group := "test"
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")
 	saramaConfig := sarama.NewConfig()
@@ -49,7 +52,7 @@ func (k *KP) Start() {
 	 */
 
 	ctx, cancel := context.WithCancel(context.Background())
-	client, err := sarama.NewConsumerGroup(k.kafkaConfig.KafkaBootstrapServers, group, saramaConfig)
+	client, err := sarama.NewConsumerGroup(k.kafkaConfig.KafkaBootstrapServers, k.consumerGroup, saramaConfig)
 	k.client = client
 	if err != nil {
 		panic(err)
@@ -64,7 +67,7 @@ func (k *KP) Start() {
 			// `Consume` should be called inside an infinite loop, when a
 			// server-side rebalance happens, the consumer session will need to be
 			// recreated to get the new claims
-			if err := k.client.Consume(ctx, []string{k.topic, k.deadLetterTopic}, &k.consumer); err != nil {
+			if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, &k.consumer); err != nil {
 				log.Panicf("Error from consumer: %v", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop

@@ -39,6 +39,15 @@ jobs:
           skip-pkg-cache: true
           skip-build-cache: true
 
+      - name: docker-compose
+        run: docker compose up -d
+      - name: wait for kafka
+        run: |
+          ports = (9092 9093 9094)
+          for port in $ports
+          do
+            nc -z localhost $port
+          done
       - name: Test and generate code coverage
         run: go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
 

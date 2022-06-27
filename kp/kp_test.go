@@ -61,7 +61,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 			}
 		}()
 		quit <- true
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 
 		err := producer.ProduceMessage("test", "1", "test")
 		a.NoError(err)
@@ -107,7 +107,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 			}
 		}()
 		quit <- true
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 
 		_ = producer.ProduceMessage("test-fail", "1", "fail")
 		time.Sleep(time.Second * 5)

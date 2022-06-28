@@ -31,3 +31,5 @@ func main() {
 
 }
 ```
+
+To disable retries, just set retries to 0

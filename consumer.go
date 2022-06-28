@@ -63,7 +63,7 @@ func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) 
 		return err
 	}
 	if retries >= consumer.retries {
-		log.Printf("Message has exceeded retries, sending to dead letter topic: %v", err)
+		log.Println("Message has exceeded retries, sending to dead letter topic")
 		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
 		if err != nil {
 			log.Printf("Error sending message to retry topic: %v", err)

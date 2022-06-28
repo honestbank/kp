@@ -273,4 +273,34 @@ func TestConsumerStruct_ProcessWithBackoff(t *testing.T) {
 		err := consumer.ProcessWithBackoff(&message)
 		a.NoError(err)
 	})
+
+	t.Run("ProcessWithBackoff - retry exceeded, should not retry", func(t *testing.T) {
+		a := assert.New(t)
+
+		ctrl := gomock.NewController(t)
+		producer := mocks.NewMockKPProducer(ctrl)
+		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
+
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+			if message == "fail" {
+				return errors.New("fail this message")
+			}
+
+			return nil
+		}, producer, time.Second*1)
+
+		message := sarama.ConsumerMessage{
+			Headers:        nil,
+			Timestamp:      time.Time{},
+			BlockTimestamp: time.Time{},
+			Key:            nil,
+			Value:          []byte(sarama.StringEncoder("fail|10")),
+			Topic:          "",
+			Partition:      0,
+			Offset:         0,
+		}
+
+		err := consumer.ProcessWithBackoff(&message)
+		a.NoError(err)
+	})
 }

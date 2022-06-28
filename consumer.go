@@ -2,8 +2,11 @@ package kp
 
 import (
 	"log"
+	"time"
 
 	"github.com/Shopify/sarama"
+
+	backoff_policy "github.com/honestbank/backoff-policy"
 )
 
 type KPConsumer interface {
@@ -21,9 +24,10 @@ type ConsumerStruct struct {
 	Processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 	producer        KPProducer
 	retries         int
+	backoffPolicy   backoff_policy.BackoffPolicy
 }
 
-func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer) ConsumerStruct {
+func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) ConsumerStruct {
 	return ConsumerStruct{
 		ready:           make(chan bool),
 		Processor:       processor,
@@ -32,6 +36,7 @@ func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retrie
 		deadLetterTopic: deadLetterTopic,
 		retries:         retries,
 		retryTopic:      retryTopic,
+		backoffPolicy:   backoff_policy.NewExponentialBackoffPolicy(backoffPolicyTime, retries),
 	}
 }
 
@@ -55,7 +60,7 @@ func (consumer *ConsumerStruct) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) error {
+func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessage) error {
 	unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
 	if err != nil {
 		log.Printf("Error unmarshaling message: %v", err)
@@ -71,14 +76,22 @@ func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) 
 
 		return nil
 	}
-	err = consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
-	if err != nil {
-		marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
-		err = consumer.producer.ProduceMessage(consumer.retryTopic, string(message.Key), marshaledMessage)
+	consumer.backoffPolicy.Execute(func(marker backoff_policy.Marker) {
+		err := consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
 		if err != nil {
-			log.Println("ERROR OCCURRED")
+			marker.MarkFailure()
+			if err != nil {
+				marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
+				err = consumer.producer.ProduceMessage(consumer.retryTopic, string(message.Key), marshaledMessage)
+				if err != nil {
+					log.Println("ERROR OCCURRED")
+				}
+			}
+
+			return
 		}
-	}
+		marker.MarkSuccess()
+	})
 
 	return nil
 }
@@ -91,8 +104,10 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 	for {
 		select {
 		case message := <-claim.Messages():
+
 			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
-			err := consumer.ProcessMessage(message)
+			err := consumer.ProcessWithBackoff(message)
+
 			if err != nil {
 				log.Printf("Error processing message: %v", err)
 			}

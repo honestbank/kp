@@ -16,7 +16,7 @@ func main() {
 		panic(err)
 	}
 
-	processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "simple-service", kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")})
+	processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "simple-service", kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")}, 0)
 	// retry topic becomes "simple-service-retry-test"
 	// dead letter topic becomes "simple-service-dead-test"
 	processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
@@ -33,3 +33,9 @@ func main() {
 ```
 
 To disable retries, just set retries to 0
+
+## Exponential backoff
+
+This library supports exponential backoff. To use a backoff policy, set the backoffDuration to anything above 1. To
+disable the backoff policy, set the backoffDuration to 0. Backoff happens on the whole client which will slow down all
+mesaages. When a message is successful, the backoffDuration is reduced.

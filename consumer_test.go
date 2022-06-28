@@ -22,7 +22,7 @@ func TestNewConsumer(t *testing.T) {
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer)
+		}, producer, 0)
 
 		a.NotNil(consumer)
 	})
@@ -35,7 +35,7 @@ func TestNewConsumer(t *testing.T) {
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer)
+		}, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -49,7 +49,7 @@ func TestNewConsumer(t *testing.T) {
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer)
+		}, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -68,7 +68,7 @@ func TestNewConsumer(t *testing.T) {
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer)
+		}, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -76,7 +76,7 @@ func TestNewConsumer(t *testing.T) {
 		a.NoError(consumer.Setup(nil))
 	})
 
-	t.Run("ProcessMessage", func(t *testing.T) {
+	t.Run("ProcessWithBackoff", func(t *testing.T) {
 		a := assert.New(t)
 
 		ctrl := gomock.NewController(t)
@@ -84,7 +84,7 @@ func TestNewConsumer(t *testing.T) {
 
 		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer)
+		}, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -96,10 +96,10 @@ func TestNewConsumer(t *testing.T) {
 			Partition:      0,
 			Offset:         0,
 		}
-		err := consumer.ProcessMessage(&message)
+		err := consumer.ProcessWithBackoff(&message)
 		a.NoError(err)
 	})
-	t.Run("ProcessMessage - fail message", func(t *testing.T) {
+	t.Run("ProcessWithBackoff - fail message", func(t *testing.T) {
 		a := assert.New(t)
 
 		ctrl := gomock.NewController(t)
@@ -112,7 +112,7 @@ func TestNewConsumer(t *testing.T) {
 			}
 
 			return nil
-		}, producer)
+		}, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -125,11 +125,11 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessMessage(&message)
+		err := consumer.ProcessWithBackoff(&message)
 		a.NoError(err)
 	})
 
-	t.Run("ProcessMessage - retry added", func(t *testing.T) {
+	t.Run("ProcessWithBackoff - retry added", func(t *testing.T) {
 		a := assert.New(t)
 
 		ctrl := gomock.NewController(t)
@@ -142,7 +142,7 @@ func TestNewConsumer(t *testing.T) {
 			}
 
 			return nil
-		}, producer)
+		}, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -155,11 +155,11 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessMessage(&message)
+		err := consumer.ProcessWithBackoff(&message)
 		a.NoError(err)
 	})
 
-	t.Run("ProcessMessage - retry exceeded, should not retry", func(t *testing.T) {
+	t.Run("ProcessWithBackoff - retry exceeded, should not retry", func(t *testing.T) {
 		a := assert.New(t)
 
 		ctrl := gomock.NewController(t)
@@ -172,7 +172,7 @@ func TestNewConsumer(t *testing.T) {
 			}
 
 			return nil
-		}, producer)
+		}, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -185,7 +185,7 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessMessage(&message)
+		err := consumer.ProcessWithBackoff(&message)
 		a.NoError(err)
 	})
 }

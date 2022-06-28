@@ -100,6 +100,15 @@ func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessa
 
 		return err
 	}
+	if retries >= consumer.retries {
+		log.Println("Message has exceeded retries, sending to dead letter topic")
+		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
+		if err != nil {
+			log.Printf("Error sending message to retry topic: %v", err)
+		}
+
+		return nil
+	}
 	consumer.backoffPolicy.Execute(func(marker backoff_policy.Marker) {
 		err := consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
 		if err != nil {

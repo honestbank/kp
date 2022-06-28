@@ -23,6 +23,8 @@ type KP struct {
 	producer        KPProducer
 	client          sarama.ConsumerGroup
 	backoffDuration time.Duration
+	processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
+	onFailure       *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 }
 
 func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, retries int, consumerGroup string, kafkaConfig KafkaConfig, backoffDuration time.Duration) KafkaProcessor {
@@ -38,11 +40,16 @@ func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, 
 	}
 }
 
+func (k *KP) OnFailure(failure func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
+	k.onFailure = &failure
+}
+
 func (k *KP) Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
-	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, processor, k.producer, k.backoffDuration)
+	k.processor = processor
 }
 
 func (k *KP) Start() {
+	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, k.processor, k.onFailure, k.producer, k.backoffDuration)
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")
 	saramaConfig := sarama.NewConfig()

@@ -25,9 +25,10 @@ type ConsumerStruct struct {
 	producer        KPProducer
 	retries         int
 	backoffPolicy   backoff_policy.BackoffPolicy
+	onFailure       *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 }
 
-func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) ConsumerStruct {
+func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, onFailure *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) ConsumerStruct {
 	return ConsumerStruct{
 		ready:           make(chan bool),
 		Processor:       processor,
@@ -37,6 +38,7 @@ func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retrie
 		retries:         retries,
 		retryTopic:      retryTopic,
 		backoffPolicy:   backoff_policy.NewExponentialBackoffPolicy(backoffPolicyTime, retries),
+		onFailure:       onFailure,
 	}
 }
 
@@ -70,6 +72,12 @@ func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessa
 	if retries >= consumer.retries {
 		log.Println("Message has exceeded retries, sending to dead letter topic")
 		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
+		if consumer.onFailure != nil {
+			err = (*consumer.onFailure)(string(message.Key), unmarshaledMessage, retries, message)
+			if err != nil {
+				log.Println("Failed OnFailure Process")
+			}
+		}
 		if err != nil {
 			log.Printf("Error sending message to retry topic: %v", err)
 		}

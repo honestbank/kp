@@ -28,11 +28,6 @@ type ConsumerStruct struct {
 }
 
 func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) ConsumerStruct {
-	var backoffPolicy backoff_policy.BackoffPolicy
-	if backoffPolicyTime > 0 {
-		backoffPolicy = backoff_policy.NewExponentialBackoffPolicy(backoffPolicyTime, retries)
-	}
-
 	return ConsumerStruct{
 		ready:           make(chan bool),
 		Processor:       processor,
@@ -41,7 +36,7 @@ func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retrie
 		deadLetterTopic: deadLetterTopic,
 		retries:         retries,
 		retryTopic:      retryTopic,
-		backoffPolicy:   backoffPolicy,
+		backoffPolicy:   backoff_policy.NewExponentialBackoffPolicy(backoffPolicyTime, retries),
 	}
 }
 
@@ -62,34 +57,6 @@ func (consumer *ConsumerStruct) Setup(sarama.ConsumerGroupSession) error {
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
 func (consumer *ConsumerStruct) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-func (consumer *ConsumerStruct) ProcessMessage(message *sarama.ConsumerMessage) error {
-	unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
-	if err != nil {
-		log.Printf("Error unmarshaling message: %v", err)
-
-		return err
-	}
-	if retries >= consumer.retries {
-		log.Println("Message has exceeded retries, sending to dead letter topic")
-		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
-		if err != nil {
-			log.Printf("Error sending message to retry topic: %v", err)
-		}
-
-		return nil
-	}
-	err = consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
-	if err != nil {
-		marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
-		err = consumer.producer.ProduceMessage(consumer.retryTopic, string(message.Key), marshaledMessage)
-		if err != nil {
-			log.Println("ERROR OCCURRED")
-		}
-	}
-
 	return nil
 }
 
@@ -137,13 +104,9 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 	for {
 		select {
 		case message := <-claim.Messages():
-			var err error
+
 			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
-			if consumer.backoffPolicy != nil {
-				err = consumer.ProcessWithBackoff(message)
-			} else {
-				err = consumer.ProcessMessage(message)
-			}
+			err := consumer.ProcessWithBackoff(message)
 
 			if err != nil {
 				log.Printf("Error processing message: %v", err)

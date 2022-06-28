@@ -45,7 +45,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 	t.Run("test new kafka processor", func(t *testing.T) {
 		a := assert.New(t)
 
-		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
 		a.NotNil(processor)
 	})
 
@@ -53,7 +53,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		a := assert.New(t)
 		data := SafeCounter{v: make(map[string]int)}
 
-		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("test")
 			if message == "fail" {
@@ -99,7 +99,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		a := assert.New(t)
 		data := SafeCounter{v: make(map[string]int)}
 
-		processor := kp2.NewKafkaProcessor("test-fail", "retry-test-fail", "dead-test-fail", 10, "test-fail", kafkaConfig)
+		processor := kp2.NewKafkaProcessor("test-fail", "retry-test-fail", "dead-test-fail", 10, "test-fail", kafkaConfig, 0)
 		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("fail")
 			if message == "fail" {

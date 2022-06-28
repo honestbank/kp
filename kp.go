@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Shopify/sarama"
 )
@@ -21,9 +22,10 @@ type KP struct {
 	kafkaConfig     KafkaConfig
 	producer        KPProducer
 	client          sarama.ConsumerGroup
+	backoffDuration time.Duration
 }
 
-func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, retries int, consumerGroup string, kafkaConfig KafkaConfig) KafkaProcessor {
+func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, retries int, consumerGroup string, kafkaConfig KafkaConfig, backoffDuration time.Duration) KafkaProcessor {
 	return &KP{
 		topic:           topic,
 		deadLetterTopic: consumerGroup + "-" + deadLetterTopic,
@@ -32,11 +34,12 @@ func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, 
 		kafkaConfig:     kafkaConfig,
 		producer:        GetProducer(kafkaConfig),
 		consumerGroup:   consumerGroup,
+		backoffDuration: backoffDuration,
 	}
 }
 
 func (k *KP) Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
-	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, processor, k.producer)
+	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, processor, k.producer, k.backoffDuration)
 }
 
 func (k *KP) Start() {

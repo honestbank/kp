@@ -17,6 +17,8 @@ func main() {
 	}
 
 	processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "simple-service", kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")})
+	// retry topic becomes "simple-service-retry-test"
+	// dead letter topic becomes "simple-service-dead-test"
 	processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 		if message == "fail" {
 			return errors.New("failed")

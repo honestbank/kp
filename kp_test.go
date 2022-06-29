@@ -1,6 +1,7 @@
 package kp_test
 
 import (
+	"context"
 	"errors"
 	"log"
 	"sync"
@@ -54,7 +55,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		data := SafeCounter{v: make(map[string]int)}
 
 		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
-		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		processor.Process(func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("test")
 			if message == "fail" {
 				return errors.New("failed")
@@ -78,18 +79,18 @@ func TestNewKafkaProcessor(t *testing.T) {
 					return
 				}
 				log.Println("foo:", foo)
-				processor.Start()
+				processor.Start(context.Background())
 				// Do other stuff
 			}
 		}()
 		quit <- true
 		time.Sleep(time.Second * 10)
 
-		err := producer.ProduceMessage("test", "1", "test")
+		err := producer.ProduceMessage(context.Background(), "test", "1", "test")
 		a.NoError(err)
-		err = producer.ProduceMessage("test", "2", "test")
+		err = producer.ProduceMessage(context.Background(), "test", "2", "test")
 		a.NoError(err)
-		err = producer.ProduceMessage("test", "3", "test")
+		err = producer.ProduceMessage(context.Background(), "test", "3", "test")
 		a.NoError(err)
 		time.Sleep(time.Second * 5)
 		close(quit)
@@ -100,7 +101,7 @@ func TestNewKafkaProcessor(t *testing.T) {
 		data := SafeCounter{v: make(map[string]int)}
 
 		processor := kp2.NewKafkaProcessor("test-fail", "retry-test-fail", "dead-test-fail", 10, "test-fail", kafkaConfig, 0)
-		processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		processor.Process(func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			data.Inc("fail")
 			if message == "fail" {
 				return errors.New("failed")
@@ -124,14 +125,14 @@ func TestNewKafkaProcessor(t *testing.T) {
 					return
 				}
 				log.Println("foo:", foo)
-				processor.Start()
+				processor.Start(context.Background())
 				// Do other stuff
 			}
 		}()
 		quit <- true
 		time.Sleep(time.Second * 10)
 
-		_ = producer.ProduceMessage("test-fail", "1", "fail")
+		_ = producer.ProduceMessage(context.Background(), "test-fail", "1", "fail")
 		time.Sleep(time.Second * 5)
 		close(quit)
 		a.Equal(10, data.Value("fail"))

@@ -1,6 +1,7 @@
 package kp_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -20,9 +21,9 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer, 0)
+		}, nil, producer, 0)
 
 		a.NotNil(consumer)
 	})
@@ -33,9 +34,9 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer, 0)
+		}, nil, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -47,9 +48,9 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer, 0)
+		}, nil, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -66,9 +67,9 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer, 0)
+		}, nil, producer, 0)
 
 		a.NotNil(consumer)
 		a.NotNil(consumer.GetReady())
@@ -82,9 +83,9 @@ func TestNewConsumer(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			return nil
-		}, producer, time.Second*1)
+		}, nil, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -96,7 +97,7 @@ func TestNewConsumer(t *testing.T) {
 			Partition:      0,
 			Offset:         0,
 		}
-		err := consumer.ProcessWithBackoff(&message)
+		err := consumer.Process(context.Background(), &message)
 		a.NoError(err)
 	})
 	t.Run("ProcessWithBackoff - fail message", func(t *testing.T) {
@@ -104,15 +105,15 @@ func TestNewConsumer(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
-		producer.EXPECT().ProduceMessage("retry-test", gomock.Any(), gomock.Any()).Return(nil)
+		producer.EXPECT().ProduceMessage(context.Background(), "retry-test", gomock.Any(), gomock.Any()).Return(nil)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}
 
 			return nil
-		}, producer, time.Second*1)
+		}, nil, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -125,7 +126,7 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessWithBackoff(&message)
+		err := consumer.Process(context.Background(), &message)
 		a.NoError(err)
 	})
 
@@ -134,15 +135,15 @@ func TestNewConsumer(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
-		producer.EXPECT().ProduceMessage("retry-test", gomock.Any(), gomock.Any()).Return(nil)
+		producer.EXPECT().ProduceMessage(context.Background(), "retry-test", gomock.Any(), gomock.Any()).Return(nil)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}
 
 			return nil
-		}, producer, time.Second*1)
+		}, nil, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -155,7 +156,7 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessWithBackoff(&message)
+		err := consumer.Process(context.Background(), &message)
 		a.NoError(err)
 	})
 
@@ -164,15 +165,15 @@ func TestNewConsumer(t *testing.T) {
 
 		ctrl := gomock.NewController(t)
 		producer := mocks.NewMockKPProducer(ctrl)
-		producer.EXPECT().ProduceMessage("dead-test", gomock.Any(), gomock.Any()).Return(nil)
+		producer.EXPECT().ProduceMessage(context.Background(), "dead-test", gomock.Any(), gomock.Any()).Return(nil)
 
-		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 			if message == "fail" {
 				return errors.New("fail this message")
 			}
 
 			return nil
-		}, producer, time.Second*1)
+		}, nil, producer, time.Second*1)
 
 		message := sarama.ConsumerMessage{
 			Headers:        nil,
@@ -185,7 +186,45 @@ func TestNewConsumer(t *testing.T) {
 			Offset:         0,
 		}
 
-		err := consumer.ProcessWithBackoff(&message)
+		err := consumer.Process(context.Background(), &message)
 		a.NoError(err)
+	})
+	t.Run("OnFailure", func(t *testing.T) {
+		a := assert.New(t)
+		data := []string{}
+		ctrl := gomock.NewController(t)
+		producer := mocks.NewMockKPProducer(ctrl)
+		producer.EXPECT().ProduceMessage(context.Background(), "dead-test", gomock.Any(), gomock.Any()).Return(nil)
+
+		failureFunc := func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+			if message == "fail" {
+				data = append(data, message)
+			}
+
+			return nil
+		}
+
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+			if message == "fail" {
+				return errors.New("fail this message")
+			}
+
+			return nil
+		}, &failureFunc, producer, time.Second*1)
+
+		message := sarama.ConsumerMessage{
+			Headers:        nil,
+			Timestamp:      time.Time{},
+			BlockTimestamp: time.Time{},
+			Key:            nil,
+			Value:          []byte(sarama.StringEncoder("fail|10")),
+			Topic:          "",
+			Partition:      0,
+			Offset:         0,
+		}
+
+		err := consumer.Process(context.Background(), &message)
+		a.NoError(err)
+		a.Equal([]string{"fail"}, data)
 	})
 }

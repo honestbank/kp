@@ -1,9 +1,14 @@
 package kp
 
-import "github.com/Shopify/sarama"
+import (
+	"context"
+
+	"github.com/Shopify/sarama"
+)
 
 type KafkaProcessor interface {
-	Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error)
-	Start()
+	Process(processor func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error)
+	Start(ctx context.Context)
 	Stop()
+	OnFailure(failure func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error)
 }

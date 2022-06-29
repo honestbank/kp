@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"strings"
@@ -16,9 +17,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// eventing.Setup(*cfg)
+
+	ctx := context.Background()
 	processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "simple-service", kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")}, 0)
-	processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+	processor.Process(func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
 		if message == "fail" {
 			return errors.New("failed")
 		}
@@ -26,6 +28,6 @@ func main() {
 		return nil
 	})
 
-	processor.Start()
+	processor.Start(ctx)
 
 }

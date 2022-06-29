@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama"
 )
 
 type KP struct {
-	consumer        ConsumerStruct
+	consumer        KPConsumer
 	topic           string
 	retryTopic      string
 	consumerGroup   string
@@ -23,8 +24,8 @@ type KP struct {
 	producer        KPProducer
 	client          sarama.ConsumerGroup
 	backoffDuration time.Duration
-	processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
-	onFailure       *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
+	processor       func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
+	onFailure       *func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 }
 
 func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, retries int, consumerGroup string, kafkaConfig KafkaConfig, backoffDuration time.Duration) KafkaProcessor {
@@ -40,15 +41,15 @@ func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, 
 	}
 }
 
-func (k *KP) OnFailure(failure func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
+func (k *KP) OnFailure(failure func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
 	k.onFailure = &failure
 }
 
-func (k *KP) Process(processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
+func (k *KP) Process(processor func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error) {
 	k.processor = processor
 }
 
-func (k *KP) Start() {
+func (k *KP) Start(ctx context.Context) {
 	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, k.processor, k.onFailure, k.producer, k.backoffDuration)
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")
@@ -61,12 +62,14 @@ func (k *KP) Start() {
 	 * Setup a new Sarama consumer group
 	 */
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	client, err := sarama.NewConsumerGroup(k.kafkaConfig.KafkaBootstrapServers, k.consumerGroup, saramaConfig)
 	k.client = client
 	if err != nil {
 		panic(err)
 	}
+
+	otelsarama.WrapConsumerGroupHandler(k.consumer)
 
 	consumptionIsPaused := false
 	wg := &sync.WaitGroup{}
@@ -77,7 +80,7 @@ func (k *KP) Start() {
 			// `Consume` should be called inside an infinite loop, when a
 			// server-side rebalance happens, the consumer session will need to be
 			// recreated to get the new claims
-			if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, &k.consumer); err != nil {
+			if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, k.consumer); err != nil {
 				log.Panicf("Error from consumer: %v", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop

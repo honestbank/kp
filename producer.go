@@ -1,14 +1,18 @@
 package kp
 
 import (
+	"context"
+
 	"github.com/Shopify/sarama"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama"
+	"go.opentelemetry.io/otel"
 )
 
 var kpprodcer *Producer
 
 type KPProducer interface {
 	GetProducer(kafkaConfig KafkaConfig) *Producer
-	ProduceMessage(topic string, key string, message string) error
+	ProduceMessage(ctx context.Context, topic string, key string, message string) error
 }
 
 type Producer struct {
@@ -25,6 +29,7 @@ func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 		if err != nil {
 			panic(err)
 		}
+		producer = otelsarama.WrapSyncProducer(saramaConfig, producer)
 
 		return &Producer{
 			producer: producer,
@@ -34,12 +39,13 @@ func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 	return kpprodcer
 }
 
-func (p *Producer) ProduceMessage(topic string, key string, message string) error {
+func (p *Producer) ProduceMessage(ctx context.Context, topic string, key string, message string) error {
 	messageToProduce := &sarama.ProducerMessage{
 		Topic: topic,
 		Key:   sarama.StringEncoder(key),
 		Value: sarama.StringEncoder(message),
 	}
+	otel.GetTextMapPropagator().Inject(ctx, otelsarama.NewProducerMessageCarrier(messageToProduce))
 	_, _, err := p.producer.SendMessage(messageToProduce)
 	if err != nil {
 		return err

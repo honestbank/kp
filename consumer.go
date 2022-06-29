@@ -1,6 +1,7 @@
 package kp
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -13,6 +14,9 @@ type KPConsumer interface {
 	Setup(sarama.ConsumerGroupSession) error
 	Cleanup(sarama.ConsumerGroupSession) error
 	ConsumeClaim(sarama.ConsumerGroupSession, sarama.ConsumerGroupClaim) error
+	GetReady() chan bool
+	SetReady(chan bool)
+	Process(ctx context.Context, message *sarama.ConsumerMessage) error
 }
 
 // ConsumerStruct represents a Sarama consumer group consumer
@@ -21,15 +25,15 @@ type ConsumerStruct struct {
 	deadLetterTopic string
 	retryTopic      string
 	ready           chan bool
-	Processor       func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
+	Processor       func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 	producer        KPProducer
 	retries         int
 	backoffPolicy   backoff_policy.BackoffPolicy
-	onFailure       *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
+	onFailure       *func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error
 }
 
-func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, onFailure *func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) ConsumerStruct {
-	return ConsumerStruct{
+func NewConsumer(topic string, retryTopic string, deadLetterTopic string, retries int, processor func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, onFailure *func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error, producer KPProducer, backoffPolicyTime time.Duration) KPConsumer {
+	return &ConsumerStruct{
 		ready:           make(chan bool),
 		Processor:       processor,
 		producer:        producer,
@@ -62,7 +66,7 @@ func (consumer *ConsumerStruct) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessage) error {
+func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.ConsumerMessage) error {
 	unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
 	if err != nil {
 		log.Printf("Error unmarshaling message: %v", err)
@@ -71,9 +75,9 @@ func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessa
 	}
 	if retries >= consumer.retries {
 		log.Println("Message has exceeded retries, sending to dead letter topic")
-		err = consumer.producer.ProduceMessage(consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
+		err = consumer.producer.ProduceMessage(ctx, consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
 		if consumer.onFailure != nil {
-			err = (*consumer.onFailure)(string(message.Key), unmarshaledMessage, retries, message)
+			err = (*consumer.onFailure)(ctx, string(message.Key), unmarshaledMessage, retries, message)
 			if err != nil {
 				log.Println("Failed OnFailure Process")
 			}
@@ -85,12 +89,12 @@ func (consumer *ConsumerStruct) ProcessWithBackoff(message *sarama.ConsumerMessa
 		return nil
 	}
 	consumer.backoffPolicy.Execute(func(marker backoff_policy.Marker) {
-		err := consumer.Processor(string(message.Key), unmarshaledMessage, retries, message)
+		err := consumer.Processor(ctx, string(message.Key), unmarshaledMessage, retries, message)
 		if err != nil {
 			marker.MarkFailure()
 			if err != nil {
 				marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
-				err = consumer.producer.ProduceMessage(consumer.retryTopic, string(message.Key), marshaledMessage)
+				err = consumer.producer.ProduceMessage(ctx, consumer.retryTopic, string(message.Key), marshaledMessage)
 				if err != nil {
 					log.Println("ERROR OCCURRED")
 				}
@@ -112,9 +116,8 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 	for {
 		select {
 		case message := <-claim.Messages():
-
 			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
-			err := consumer.ProcessWithBackoff(message)
+			err := consumer.Process(session.Context(), message)
 
 			if err != nil {
 				log.Printf("Error processing message: %v", err)

@@ -456,7 +456,4 @@ config/*.json
 coverage.txt
 coverage.tmp
 
-#ignore mocks
-mocks
-
 .idea

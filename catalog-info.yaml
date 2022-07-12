@@ -1,0 +1,18 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kp
+  description: Library for handing Kafka messages with retries
+  annotations:
+    github.com/project-slug: honestbank/kp
+    sonarqube.org/project-key: honestbank_kp
+  tags:
+    - golang
+    - user:bludot
+spec:
+  type: library
+  lifecycle: production
+  owner: spend-squad
+  dependsOn: 
+    - component:backoff-policy

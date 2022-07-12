@@ -60,3 +60,19 @@ processor := kp.NewKafkaProcessor(
 
 This is useful when you have a worker that listens to multiple topics and each topic needs to have its own retry and
 dead letter topic.
+
+For retry and deadletter topics they are generated with the consumer group.
+ex:
+```
+  topic: test
+  retrytopic: retry
+  deadlettertopic: deadletter
+  consumergroup: group
+
+resulting topics:
+    retrytopic: group-retry
+    deadlettertopic: group-deadletter
+
+
+resulting topic format: <consumer group>-<retry|deadletter topic>
+```

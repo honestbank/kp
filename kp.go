@@ -54,7 +54,7 @@ func (k *KP) Start(ctx context.Context) {
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")
 	log.Println("Kafka consumer group:", k.consumerGroup)
-	log.Println("Kafka topic:", k.topic, "|", k.retryTopic, "|", k.deadLetterTopic)
+	log.Println("Kafka topics:", k.topic, "|", k.retryTopic, "|", k.deadLetterTopic)
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Partitioner = sarama.NewRandomPartitioner
 	saramaConfig.Producer.RequiredAcks = sarama.WaitForAll

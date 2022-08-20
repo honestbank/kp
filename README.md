@@ -15,15 +15,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	retryCount := 10
+	consumerGroup := "simple-service" // usually the name of your service
+	backoffDuration := time.Second * 1 // set to 0 for no backoff
 
-	processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "simple-service", kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")}, 0)
-	// retry topic becomes "simple-service-retry-test"
-	// dead letter topic becomes "simple-service-dead-test"
+	processor := kp.NewKafkaProcessor("main-topic", "retry-main-topic", "dead-main-topic", retryCount, consumerGroup, kp.KafkaConfig{KafkaBootstrapServers: strings.Split(cfg.KafkaConfig.KafkaBootstrapServers, ",")}, backoffDuration)
+	// retry topic becomes "simple-service-retry-main-topic"
+	// dead letter topic becomes "simple-service-dead-main-topic"
 	processor.Process(func(key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
-		if message == "fail" {
-			return errors.New("failed")
+		err := processMessage(message)
+		if err != nil {
+			log.Printf("Error processing message: %s", err)
+			return err
 		}
-		log.Println("message content:" + message)
+		log.Println("successfully processed message")
 		return nil
 	})
 

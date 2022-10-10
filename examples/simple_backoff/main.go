@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"strings"
 	"time"
 
@@ -24,7 +23,6 @@ func main() {
 		if message == "fail" {
 			return errors.New("failed")
 		}
-		log.Println("message content:" + message)
 		return nil
 	})
 

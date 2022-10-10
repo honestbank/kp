@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/Shopify/sarama"
@@ -24,7 +23,6 @@ func main() {
 		if message == "fail" {
 			return errors.New("failed")
 		}
-		log.Println("message content:" + message)
 		return nil
 	})
 

@@ -36,7 +36,7 @@ func NewKafkaProcessor(topic string, retryTopic string, deadLetterTopic string, 
 		retries:         retries,
 		kafkaConfig:     kafkaConfig,
 		producer:        GetProducer(kafkaConfig),
-		consumerGroup:   consumerGroup,
+		consumerGroup:   consumerGroup + "-" + "kp",
 		backoffDuration: backoffDuration,
 	}
 }

@@ -227,4 +227,45 @@ func TestNewConsumer(t *testing.T) {
 		a.NoError(err)
 		a.Equal([]string{"fail"}, data)
 	})
+	t.Run("ProcessFailedWithNilMessage", func(t *testing.T) {
+		a := assert.New(t)
+
+		ctrl := gomock.NewController(t)
+		producer := mocks.NewMockKPProducer(ctrl)
+
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+			return nil
+		}, nil, producer, time.Second*1)
+
+		err := consumer.Process(context.Background(), nil)
+		a.Error(err)
+	})
+	t.Run("ProcessFailedWithBrokenProducer", func(t *testing.T) {
+		a := assert.New(t)
+
+		ctrl := gomock.NewController(t)
+		producer := mocks.NewMockKPProducer(ctrl)
+		producer.EXPECT().ProduceMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(errors.New("cannot connect to producer"))
+		consumer := kp.NewConsumer("test", "retry-test", "dead-test", 10, func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+			if message == "fail" {
+				return errors.New("fail this message")
+			}
+
+			return nil
+		}, nil, producer, time.Second*1)
+
+		message := sarama.ConsumerMessage{
+			Headers:        nil,
+			Timestamp:      time.Time{},
+			BlockTimestamp: time.Time{},
+			Key:            nil,
+			Value:          []byte(sarama.StringEncoder("fail|10")),
+			Topic:          "",
+			Partition:      0,
+			Offset:         0,
+		}
+
+		err := consumer.Process(context.Background(), &message)
+		a.Error(err)
+	})
 }

@@ -2,6 +2,7 @@ package kp
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -67,7 +68,10 @@ func (consumer *ConsumerStruct) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.ConsumerMessage) error {
-	unmarshaledMessage, retries, err := UnmarshalStringMessage(string(message.Value))
+	if message == nil {
+		return errors.New("error while trying to consume nil message")
+	}
+	unmarshalMessage, retries, err := UnmarshalStringMessage(string(message.Value))
 	if err != nil {
 		log.Printf("Error unmarshaling message: %v", err)
 
@@ -75,9 +79,9 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 	}
 	if retries >= consumer.retries {
 		log.Println("Message has exceeded retries, sending to dead letter topic")
-		err = consumer.producer.ProduceMessage(ctx, consumer.deadLetterTopic, string(message.Key), unmarshaledMessage)
+		err = consumer.producer.ProduceMessage(ctx, consumer.deadLetterTopic, string(message.Key), unmarshalMessage)
 		if consumer.onFailure != nil {
-			err = (*consumer.onFailure)(ctx, string(message.Key), unmarshaledMessage, retries, message)
+			err = (*consumer.onFailure)(ctx, string(message.Key), unmarshalMessage, retries, message)
 			if err != nil {
 				log.Println("Failed OnFailure Process")
 
@@ -93,11 +97,11 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 		return nil
 	}
 	consumer.backoffPolicy.Execute(func(marker backoff_policy.Marker) {
-		err := consumer.Processor(ctx, string(message.Key), unmarshaledMessage, retries, message)
+		err := consumer.Processor(ctx, string(message.Key), unmarshalMessage, retries, message)
 		if err != nil {
 			marker.MarkFailure()
 			if err != nil {
-				marshaledMessage := MarshalStringMessage(unmarshaledMessage, retries+1)
+				marshaledMessage := MarshalStringMessage(unmarshalMessage, retries+1)
 				err = consumer.producer.ProduceMessage(ctx, consumer.retryTopic, string(message.Key), marshaledMessage)
 				if err != nil {
 					log.Println("ERROR OCCURRED")

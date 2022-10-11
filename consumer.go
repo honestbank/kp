@@ -80,10 +80,14 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 			err = (*consumer.onFailure)(ctx, string(message.Key), unmarshaledMessage, retries, message)
 			if err != nil {
 				log.Println("Failed OnFailure Process")
+
+				return err
 			}
 		}
 		if err != nil {
-			log.Printf("Error sending message to retry topic: %v", err)
+			log.Printf("Error sending message to dead topic: %v", err)
+
+			return err
 		}
 
 		return nil
@@ -97,6 +101,8 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 				err = consumer.producer.ProduceMessage(ctx, consumer.retryTopic, string(message.Key), marshaledMessage)
 				if err != nil {
 					log.Println("ERROR OCCURRED")
+
+					return
 				}
 			}
 
@@ -120,6 +126,8 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 
 			if err != nil {
 				log.Printf("Error processing message: %v", err)
+
+				return err
 			}
 			session.MarkMessage(message, "")
 

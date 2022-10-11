@@ -26,6 +26,8 @@ func main() {
 		return nil
 	})
 
-	processor.Start(ctx)
-
+	err = processor.Start(ctx)
+	if err != nil {
+		return
+	}
 }

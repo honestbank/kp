@@ -49,7 +49,7 @@ func (k *KP) Process(processor func(ctx context.Context, key string, message str
 	k.processor = processor
 }
 
-func (k *KP) Start(ctx context.Context) {
+func (k *KP) Start(ctx context.Context) error {
 	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, k.processor, k.onFailure, k.producer, k.backoffDuration)
 	keepRunning := true
 	log.Println("Starting a new Sarama consumer")
@@ -74,24 +74,11 @@ func (k *KP) Start(ctx context.Context) {
 	otelsarama.WrapConsumerGroupHandler(k.consumer)
 
 	consumptionIsPaused := false
+	errChannel := make(chan error)
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			// `Consume` should be called inside an infinite loop, when a
-			// server-side rebalance happens, the consumer session will need to be
-			// recreated to get the new claims
-			if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, k.consumer); err != nil {
-				log.Panicf("Error from consumer: %v", err)
-			}
-			// check if context was cancelled, signaling that the consumer should stop
-			if ctx.Err() != nil {
-				return
-			}
-			k.consumer.SetReady(make(chan bool))
-		}
-	}()
+
+	go CreateConsumerSession(k, wg, ctx, errChannel)
 
 	<-k.consumer.GetReady() // Await till the consumer has been set up
 	log.Println("Sarama consumer up and running!...")
@@ -107,9 +94,13 @@ func (k *KP) Start(ctx context.Context) {
 		case <-ctx.Done():
 			log.Println("terminating: context cancelled")
 			keepRunning = false
+			k.Stop()
+			wg.Done()
 		case <-sigterm:
 			log.Println("terminating: via signal")
 			keepRunning = false
+			k.Stop()
+			wg.Done()
 		case <-sigusr1:
 			toggleConsumptionFlow(client, &consumptionIsPaused)
 		}
@@ -118,7 +109,11 @@ func (k *KP) Start(ctx context.Context) {
 	wg.Wait()
 	if err = client.Close(); err != nil {
 		log.Panicf("Error closing client: %v", err)
+
+		return err
 	}
+
+	return <-errChannel
 }
 
 func (k *KP) Stop() {
@@ -136,4 +131,21 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 	}
 
 	*isPaused = !*isPaused
+}
+
+func CreateConsumerSession(k *KP, wg *sync.WaitGroup, ctx context.Context, errChannel chan error) {
+	defer wg.Done()
+	for {
+		// `Consume` should be called inside an infinite loop, when a
+		// server-side rebalance happens, the consumer session will need to be
+		// recreated to get the new claims
+		if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, k.consumer); err != nil {
+			errChannel <- err
+		}
+		// check if context was cancelled, signaling that the consumer should stop
+		if ctx.Err() != nil {
+			errChannel <- ctx.Err()
+		}
+		k.consumer.SetReady(make(chan bool))
+	}
 }

@@ -3,22 +3,25 @@ package kp_test
 import (
 	"context"
 	"errors"
-	"log"
+	"os"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/honestbank/kp"
 	"github.com/stretchr/testify/assert"
-
-	kp2 "github.com/honestbank/kp"
 )
 
-var kafkaConfig = kp2.KafkaConfig{
+const retiresCount = 2
+
+var kafkaConfig = kp.KafkaConfig{
 	KafkaBootstrapServers: []string{"localhost:9092"},
 }
 
-var producer = kp2.NewProducer(kafkaConfig)
+var data = SafeCounter{v: make(map[string]int)}
+var producer = kp.NewProducer(kafkaConfig)
 
 type SafeCounter struct {
 	mu sync.Mutex
@@ -46,95 +49,65 @@ func TestNewKafkaProcessor(t *testing.T) {
 	t.Run("test new kafka processor", func(t *testing.T) {
 		a := assert.New(t)
 
-		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
+		processor := kp.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
 		a.NotNil(processor)
 	})
 
 	t.Run("test process", func(t *testing.T) {
-		a := assert.New(t)
-		data := SafeCounter{v: make(map[string]int)}
-
-		processor := kp2.NewKafkaProcessor("test", "retry-test", "dead-test", 10, "test", kafkaConfig, 0)
-		processor.Process(func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
-			data.Inc("test")
-			if message == "fail" {
-				return errors.New("failed")
-			}
-			log.Println("message content:" + message)
-
-			return nil
-		})
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-		quit := make(chan bool)
-
-		go func() {
-			for {
-				foo, ok := <-quit
-				if !ok {
-					processor.Stop()
-					wg.Done()
-
-					return
-				}
-				log.Println("foo:", foo)
-				processor.Start(context.Background())
-				// Do other stuff
-			}
-		}()
-		quit <- true
-		time.Sleep(time.Second * 10)
-
-		err := producer.ProduceMessage(context.Background(), "test", "1", "test")
-		a.NoError(err)
-		err = producer.ProduceMessage(context.Background(), "test", "2", "test")
-		a.NoError(err)
-		err = producer.ProduceMessage(context.Background(), "test", "3", "test")
-		a.NoError(err)
-		time.Sleep(time.Second * 5)
-		close(quit)
-		a.Equal(3, data.Value("test"))
+		ctx, ctxWithCancel := context.WithCancel(context.Background())
+		processor := CreateKPProcessor()
+		go produceMockMessage("success")
+		go produceMockMessage("success")
+		go produceMockMessage("success")
+		go sendContextDoneSignal(10, ctxWithCancel)
+		_ = processor.Start(ctx)
+		assert.Equal(t, 3, data.Value("success"))
 	})
+
 	t.Run("test process fail", func(t *testing.T) {
-		a := assert.New(t)
-		data := SafeCounter{v: make(map[string]int)}
-
-		processor := kp2.NewKafkaProcessor("test-fail", "retry-test-fail", "dead-test-fail", 10, "test-fail", kafkaConfig, 0)
-		processor.Process(func(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
-			data.Inc("fail")
-			if message == "fail" {
-				return errors.New("failed")
-			}
-			log.Println("message content:" + message)
-
-			return nil
-		})
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-		quit := make(chan bool)
-
-		go func() {
-			for {
-				foo, ok := <-quit
-				if !ok {
-					processor.Stop()
-					wg.Done()
-
-					return
-				}
-				log.Println("foo:", foo)
-				processor.Start(context.Background())
-				// Do other stuff
-			}
-		}()
-		quit <- true
-		time.Sleep(time.Second * 10)
-
-		_ = producer.ProduceMessage(context.Background(), "test-fail", "1", "fail")
-		time.Sleep(time.Second * 5)
-		close(quit)
-		a.Equal(10, data.Value("fail"))
+		processor := CreateKPProcessor()
+		go produceMockMessage("fail")
+		go sendShutdownSignal(10)
+		_ = processor.Start(context.Background()) //cannot handle error due to not implement channel in this version(waiting for v2)
+		assert.Equal(t, retiresCount, data.Value("fail"))
 	})
+}
+
+func sendShutdownSignal(duration time.Duration) {
+	time.Sleep(duration * time.Second)
+	_ = syscall.Kill(os.Getpid(), syscall.SIGTERM)
+}
+
+func sendContextDoneSignal(duration time.Duration, ctx context.CancelFunc) {
+	time.Sleep(duration * time.Second)
+	ctx()
+}
+
+func ReceiveMessage(ctx context.Context, key string, message string, retries int, rawMessage *sarama.ConsumerMessage) error {
+	if message == "fail" {
+		data.Inc("fail")
+
+		return errors.New("failed message from ReceivedMessage")
+	}
+	data.Inc("success")
+
+	return nil
+}
+
+func CreateKPProcessor() kp.KafkaProcessor {
+	data = SafeCounter{v: make(map[string]int)}
+	p := kp.NewKafkaProcessor(
+		"test-topic", "retry-test", "dead-test",
+		retiresCount,
+		"test-application-name",
+		kafkaConfig,
+		time.Second*1)
+	p.Process(ReceiveMessage)
+
+	return p
+}
+
+func produceMockMessage(msg string) {
+	time.Sleep(time.Second * 8) // waiting consumer ready
+	_ = producer.ProduceMessage(context.Background(), "test-topic", "1", msg)
 }

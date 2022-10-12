@@ -3,7 +3,6 @@ package kp
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -73,24 +72,17 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 	}
 	unmarshalMessage, retries, err := UnmarshalStringMessage(string(message.Value))
 	if err != nil {
-		log.Printf("Error unmarshaling message: %v", err)
-
 		return err
 	}
 	if retries >= consumer.retries {
-		log.Println("Message has exceeded retries, sending to dead letter topic")
 		err = consumer.producer.ProduceMessage(ctx, consumer.deadLetterTopic, string(message.Key), unmarshalMessage)
 		if consumer.onFailure != nil {
 			err = (*consumer.onFailure)(ctx, string(message.Key), unmarshalMessage, retries, message)
 			if err != nil {
-				log.Println("Failed OnFailure Process")
-
 				return err
 			}
 		}
 		if err != nil {
-			log.Printf("Error sending message to dead topic: %v", err)
-
 			return err
 		}
 
@@ -104,9 +96,7 @@ func (consumer *ConsumerStruct) Process(ctx context.Context, message *sarama.Con
 				marshaledMessage := MarshalStringMessage(unmarshalMessage, retries+1)
 				err = consumer.producer.ProduceMessage(ctx, consumer.retryTopic, string(message.Key), marshaledMessage)
 				if err != nil {
-					log.Println("ERROR OCCURRED")
-
-					return
+					return //need to handle the error in V2
 				}
 			}
 
@@ -127,10 +117,7 @@ func (consumer *ConsumerStruct) ConsumeClaim(session sarama.ConsumerGroupSession
 		select {
 		case message := <-claim.Messages():
 			err := consumer.Process(session.Context(), message)
-
 			if err != nil {
-				log.Printf("Error processing message: %v", err)
-
 				return err
 			}
 			session.MarkMessage(message, "")

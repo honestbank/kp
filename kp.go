@@ -2,7 +2,6 @@ package kp
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -52,9 +51,6 @@ func (k *KP) Process(processor func(ctx context.Context, key string, message str
 func (k *KP) Start(ctx context.Context) error {
 	k.consumer = NewConsumer(k.topic, k.retryTopic, k.deadLetterTopic, k.retries, k.processor, k.onFailure, k.producer, k.backoffDuration)
 	keepRunning := true
-	log.Println("Starting a new Sarama consumer")
-	log.Println("Kafka consumer group:", k.consumerGroup)
-	log.Println("Kafka topics:", k.topic, "|", k.retryTopic, "|", k.deadLetterTopic)
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Partitioner = sarama.NewRandomPartitioner
 	saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
@@ -74,14 +70,14 @@ func (k *KP) Start(ctx context.Context) error {
 	otelsarama.WrapConsumerGroupHandler(k.consumer)
 
 	consumptionIsPaused := false
-	errChannel := make(chan error)
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	go CreateConsumerSession(k, wg, ctx, errChannel)
+	go func() {
+		_ = CreateConsumerSession(k, wg, ctx)
+	}() // need to handle the error in V2
 
 	<-k.consumer.GetReady() // Await till the consumer has been set up
-	log.Println("Sarama consumer up and running!...")
 
 	sigusr1 := make(chan os.Signal, 1)
 	signal.Notify(sigusr1, syscall.SIGUSR1)
@@ -92,15 +88,11 @@ func (k *KP) Start(ctx context.Context) error {
 	for keepRunning {
 		select {
 		case <-ctx.Done():
-			log.Println("terminating: context cancelled")
 			keepRunning = false
 			k.Stop()
-			wg.Done()
 		case <-sigterm:
-			log.Println("terminating: via signal")
 			keepRunning = false
 			k.Stop()
-			wg.Done()
 		case <-sigusr1:
 			toggleConsumptionFlow(client, &consumptionIsPaused)
 		}
@@ -108,43 +100,38 @@ func (k *KP) Start(ctx context.Context) error {
 	cancel()
 	wg.Wait()
 	if err = client.Close(); err != nil {
-		log.Panicf("Error closing client: %v", err)
-
 		return err
 	}
 
-	return <-errChannel
+	return nil
 }
 
 func (k *KP) Stop() {
-	log.Println("Stopping Kafka consumer")
 	k.client.Close()
 }
 
 func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 	if *isPaused {
 		client.ResumeAll()
-		log.Println("Resuming consumption")
 	} else {
 		client.PauseAll()
-		log.Println("Pausing consumption")
 	}
 
 	*isPaused = !*isPaused
 }
 
-func CreateConsumerSession(k *KP, wg *sync.WaitGroup, ctx context.Context, errChannel chan error) {
+func CreateConsumerSession(k *KP, wg *sync.WaitGroup, ctx context.Context) error {
 	defer wg.Done()
 	for {
 		// `Consume` should be called inside an infinite loop, when a
 		// server-side rebalance happens, the consumer session will need to be
 		// recreated to get the new claims
 		if err := k.client.Consume(ctx, []string{k.topic, k.retryTopic}, k.consumer); err != nil {
-			errChannel <- err
+			return err
 		}
 		// check if context was cancelled, signaling that the consumer should stop
 		if ctx.Err() != nil {
-			errChannel <- ctx.Err()
+			return ctx.Err()
 		}
 		k.consumer.SetReady(make(chan bool))
 	}

@@ -20,6 +20,11 @@ type BenchmarkMessage struct {
 }
 
 func TestSerialization(t *testing.T) {
+	t.Run("returns nil if message is nil", func(t *testing.T) {
+		bytes, err := serialization.Encode(nil, 1)
+		assert.Nil(t, err)
+		assert.Nil(t, bytes)
+	})
 	t.Run("can serialize and deserialize", func(t *testing.T) {
 		bytes, err := serialization.Encode(BenchmarkMessage{
 			Body:  "my-body",

@@ -60,26 +60,21 @@ func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType,
 
 func getKafkaConfig(kafkaConfig config.KafkaConfig) *kafka.ConfigMap {
 	cfg := &kafka.ConfigMap{}
-	if kafkaConfig.BootstrapServers != nil {
-		// looked at the source code, as of now, there's no error being returned, it's always nil
-		_ = cfg.SetKey("bootstrap.servers", *kafkaConfig.BootstrapServers)
+
+	cfg = hydrateIfNotNil(cfg, "bootstrap.servers", kafkaConfig.BootstrapServers)
+	cfg = hydrateIfNotNil(cfg, "sasl.mechanisms", kafkaConfig.SaslMechanism)
+	cfg = hydrateIfNotNil(cfg, "security.protocol", kafkaConfig.SecurityProtocol)
+	cfg = hydrateIfNotNil(cfg, "sasl.username", kafkaConfig.Username)
+
+	return hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
+}
+
+func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) *kafka.ConfigMap {
+	if value == nil {
+		return cfg
 	}
-	if kafkaConfig.SaslMechanism != nil {
-		// looked at the source code, as of now, there's no error being returned, it's always nil
-		_ = cfg.SetKey("sasl.mechanisms", *kafkaConfig.SaslMechanism)
-	}
-	if kafkaConfig.SecurityProtocol != nil {
-		// looked at the source code, as of now, there's no error being returned, it's always nil
-		_ = cfg.SetKey("security.protocol", *kafkaConfig.SecurityProtocol)
-	}
-	if kafkaConfig.Username != nil {
-		// looked at the source code, as of now, there's no error being returned, it's always nil
-		_ = cfg.SetKey("sasl.username", *kafkaConfig.Username)
-	}
-	if kafkaConfig.Password != nil {
-		// looked at the source code, as of now, there's no error being returned, it's always nil
-		_ = cfg.SetKey("sasl.password", *kafkaConfig.Password)
-	}
+	// looked at the source code, as of now, there's no error being returned, it's always nil
+	_ = cfg.SetKey(key, *value)
 
 	return cfg
 }

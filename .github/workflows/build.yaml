@@ -47,6 +47,7 @@ jobs:
           tar -xzf kafka_2.13-3.2.3.tgz
           ./kafka_2.13-3.2.3/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
           ./kafka_2.13-3.2.3/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+      - run: sleep 10
       - name: Test and generate code coverage
         run: go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
       - run: docker compose down
@@ -57,6 +58,7 @@ jobs:
           tar -xzf kafka_2.12-3.2.0.tgz
           ./kafka_2.12-3.2.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
           ./kafka_2.12-3.2.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+      - run: sleep 10
       - run: cd v2 && go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
 
       - name: sonarcloud-scan

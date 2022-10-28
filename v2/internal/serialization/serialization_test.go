@@ -41,16 +41,16 @@ func TestSerialization(t *testing.T) {
 		assert.NoError(t, err)
 		ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 		assert.NoError(t, err)
-		for i := 0; i < 25000; i++ {
+		for i := 0; i < 250; i++ {
 			payload, err := ser.Serialize("topic-kp", &BenchmarkMessage{
 				Body:  "my-body",
-				Count: 1000,
+				Count: i,
 			})
 			assert.NoError(t, err)
 			kpPayload, err := serialization.Encode(BenchmarkMessage{
 				Body:  "my-body",
-				Count: 1000,
-			}, 5)
+				Count: i,
+			}, 1)
 			assert.NoError(t, err)
 			assert.Equal(t, len(payload), len(kpPayload))
 			assert.Equal(t, payload, kpPayload)

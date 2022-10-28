@@ -10,6 +10,7 @@ func Decode[MessageType any](payload []byte) (*MessageType, error) {
 	if err != nil {
 		return nil, err
 	}
+	// first byte is the magic byte and the 4 bytes are the schema ID int which is why we start reading from 5th position
 	_, err = avro.Unmarshal(payload[5:], &emptyMessage, typ)
 	if err != nil {
 		return nil, err

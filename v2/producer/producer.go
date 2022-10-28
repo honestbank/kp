@@ -34,6 +34,8 @@ func (p producer[BodyType, KeyType]) Produce(message KafkaMessage[BodyType, KeyT
 }
 
 func (p producer[BodyType, KeyType]) Flush() error {
+	// I just felt like 3000 because 3 second should be enough for messages to be flushed
+	// we'll need to optimize this as we go
 	p.k.Flush(3000)
 
 	return nil

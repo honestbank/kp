@@ -71,7 +71,7 @@ func TestNew(t *testing.T) {
 		topic := "topic-confluent"
 		defer confluentProducer.Flush(3000)
 
-		for i := 0; i < 25000; i++ {
+		for i := 0; i < 250; i++ {
 			payload, err := ser.Serialize(topic, &BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
@@ -80,7 +80,7 @@ func TestNew(t *testing.T) {
 			kPayload, err := serialization.Encode(BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
-			}, 5)
+			}, 1)
 			assert.Equal(t, kPayload, payload)
 			assert.Equal(t, len(kPayload), len(payload))
 			err = confluentProducer.Produce(&kafka.Message{

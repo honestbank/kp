@@ -27,8 +27,10 @@ type MyMessageBreaking struct {
 }
 
 func TestNewProducer(t *testing.T) {
-	os.Setenv("SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	defer os.Unsetenv("SCHEMA_REGISTRY_ENDPOINT")
+	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+	os.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
+	defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
+	defer os.Unsetenv("KP_KAFKA_BOOTSTRAP_SERVERS")
 	t.Run("schema registry", func(t *testing.T) {
 		t.Run("when a producer is initialized, schema is automatically registered", func(t *testing.T) {
 			_, err := producer.New[MyMessage, int]("test-topic-3")
@@ -57,12 +59,12 @@ func TestNewProducer(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	os.Setenv("SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	defer os.Unsetenv("SCHEMA_REGISTRY_ENDPOINT")
+	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+	defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
 	t.Run("produce through confluent", func(t *testing.T) {
 		confluentProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
 		assert.NoError(t, err)
-		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("SCHEMA_REGISTRY_ENDPOINT")))
+		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
 		assert.NoError(t, err)
 		ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 		assert.NoError(t, err)

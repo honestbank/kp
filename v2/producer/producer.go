@@ -3,6 +3,8 @@ package producer
 import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
+	"github.com/honestbank/kp/v2/internal/config"
+
 	"github.com/honestbank/kp/v2/internal/schemaregistry"
 	"github.com/honestbank/kp/v2/internal/serialization"
 )
@@ -38,18 +40,46 @@ func (p producer[BodyType, KeyType]) Flush() error {
 }
 
 func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType, KeyType], error) {
+	cfg, err := config.LoadConfig[config.KafkaConfig]()
+	if err != nil {
+		return nil, err
+	}
 	schemaID, err := schemaregistry.Publish[MessageType](topic)
 	if err != nil {
 		return nil, err
 	}
 
-	k, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost",
-	})
+	k, err := kafka.NewProducer(getKafkaConfig(*cfg))
 
 	return producer[MessageType, KeyType]{
 		k:        k,
 		schemaID: *schemaID,
 		topic:    topic,
 	}, nil
+}
+
+func getKafkaConfig(kafkaConfig config.KafkaConfig) *kafka.ConfigMap {
+	cfg := &kafka.ConfigMap{}
+	if kafkaConfig.BootstrapServers != nil {
+		// looked at the source code, as of now, there's no error being returned, it's always nil
+		_ = cfg.SetKey("bootstrap.servers", *kafkaConfig.BootstrapServers)
+	}
+	if kafkaConfig.SaslMechanism != nil {
+		// looked at the source code, as of now, there's no error being returned, it's always nil
+		_ = cfg.SetKey("sasl.mechanisms", *kafkaConfig.SaslMechanism)
+	}
+	if kafkaConfig.SecurityProtocol != nil {
+		// looked at the source code, as of now, there's no error being returned, it's always nil
+		_ = cfg.SetKey("security.protocol", *kafkaConfig.SecurityProtocol)
+	}
+	if kafkaConfig.Username != nil {
+		// looked at the source code, as of now, there's no error being returned, it's always nil
+		_ = cfg.SetKey("sasl.username", *kafkaConfig.Username)
+	}
+	if kafkaConfig.Password != nil {
+		// looked at the source code, as of now, there's no error being returned, it's always nil
+		_ = cfg.SetKey("sasl.password", *kafkaConfig.Password)
+	}
+
+	return cfg
 }

@@ -1,7 +1,7 @@
 package schemaregistry
 
 type Config struct {
-	Endpoint string `env:"SCHEMA_REGISTRY_ENDPOINT" required:"true"`
-	Username string `env:"SCHEMA_REGISTRY_USERNAME" default:""`
-	Password string `env:"SCHEMA_REGISTRY_PASSWORD" default:""`
+	Endpoint string `env:"KP_SCHEMA_REGISTRY_ENDPOINT" required:"true"`
+	Username string `env:"KP_SCHEMA_REGISTRY_USERNAME" default:""`
+	Password string `env:"KP_SCHEMA_REGISTRY_PASSWORD" default:""`
 }

@@ -34,10 +34,10 @@ func TestSerialization(t *testing.T) {
 		assert.Equal(t, 100, msg.Count)
 	})
 	t.Run("matches with confluent serializer", func(t *testing.T) {
-		os.Setenv("SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-		defer os.Unsetenv("SCHEMA_REGISTRY_ENDPOINT")
+		os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+		defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
 
-		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("SCHEMA_REGISTRY_ENDPOINT")))
+		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
 		assert.NoError(t, err)
 		ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 		assert.NoError(t, err)

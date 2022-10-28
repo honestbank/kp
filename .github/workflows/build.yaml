@@ -58,7 +58,6 @@ jobs:
           ./kafka_2.13-3.2.3/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
       - run: sleep 10
       - run: cd v2 && go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
-      - run: cd v2 && go test -v -race --tags=lab_integration_test ./producer/producer_integration_test_remote_test.go
       - run: tail -n +2 v2/coverage.txt >> coverage.txt && rm v2/coverage.txt
 
       - name: sonarcloud-scan

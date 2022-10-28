@@ -37,11 +37,6 @@ services:
       - local-zookeeper
     networks:
       kafka:
-    healthcheck:
-      test: [ "CMD", "kafka-topics.sh", "--list", "--zookeeper", "zookeeper:2181" ]
-      interval: 5s
-      timeout: 10s
-      retries: 5
   local-kafka2:
     image: confluentinc/cp-kafka:5.5.5
     hostname: local-kafka2
@@ -63,11 +58,6 @@ services:
       - "local-zookeeper"
     networks:
       kafka:
-    healthcheck:
-      test: [ "CMD", "kafka-topics.sh", "--list", "--zookeeper", "zookeeper:2181" ]
-      interval: 5s
-      timeout: 10s
-      retries: 5
   local-kafka3:
     image: confluentinc/cp-kafka:5.5.5
     hostname: local-kafka3
@@ -89,11 +79,6 @@ services:
       - "local-zookeeper"
     networks:
       kafka:
-    healthcheck:
-      test: [ "CMD", "kafka-topics.sh", "--list", "--zookeeper", "zookeeper:2181" ]
-      interval: 5s
-      timeout: 10s
-      retries: 5
   local-kafdrop:
     image: obsidiandynamics/kafdrop
     container_name: local-kafdrop

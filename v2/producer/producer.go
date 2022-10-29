@@ -63,12 +63,13 @@ func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType,
 func getKafkaConfig(kafkaConfig config.KafkaConfig) *kafka.ConfigMap {
 	cfg := &kafka.ConfigMap{}
 
-	cfg = hydrateIfNotNil(cfg, "bootstrap.servers", kafkaConfig.BootstrapServers)
-	cfg = hydrateIfNotNil(cfg, "sasl.mechanisms", kafkaConfig.SaslMechanism)
-	cfg = hydrateIfNotNil(cfg, "security.protocol", kafkaConfig.SecurityProtocol)
-	cfg = hydrateIfNotNil(cfg, "sasl.username", kafkaConfig.Username)
+	hydrateIfNotNil(cfg, "bootstrap.servers", kafkaConfig.BootstrapServers)
+	hydrateIfNotNil(cfg, "sasl.mechanisms", kafkaConfig.SaslMechanism)
+	hydrateIfNotNil(cfg, "security.protocol", kafkaConfig.SecurityProtocol)
+	hydrateIfNotNil(cfg, "sasl.username", kafkaConfig.Username)
+	hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
 
-	return hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
+	return cfg
 }
 
 func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) *kafka.ConfigMap {

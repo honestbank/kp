@@ -72,12 +72,10 @@ func getKafkaConfig(kafkaConfig config.KafkaConfig) *kafka.ConfigMap {
 	return cfg
 }
 
-func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) *kafka.ConfigMap {
+func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) {
 	if value == nil {
-		return cfg
+		return
 	}
 	// looked at the source code, as of now, there's no error being returned, it's always nil
 	_ = cfg.SetKey(key, *value)
-
-	return cfg
 }

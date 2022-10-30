@@ -40,8 +40,9 @@ func TestNew(t *testing.T) {
 		assert.NoError(t, err)
 		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
 		assert.NoError(t, err)
-		p1.Flush()
 		time.Sleep(time.Millisecond * 500)
+		p1.Flush()
+		time.Sleep(time.Millisecond * 1000)
 		shouldContinue = false
 		time.Sleep(time.Millisecond * 500)
 		assert.Equal(t, 3, numberOfMessage)

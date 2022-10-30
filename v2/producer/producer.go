@@ -42,6 +42,8 @@ func (p producer[BodyType, KeyType]) Flush() error {
 
 func (p producer[BodyType, KeyType]) ProduceRaw(message *kafka.Message) error {
 	// todo: maybe rename this method so that it tells people to not use it unless they know what they're doing.
+	message.TopicPartition.Topic = &p.topic
+	message.TopicPartition.Partition = kafka.PartitionAny
 	return p.k.Produce(message, nil)
 }
 

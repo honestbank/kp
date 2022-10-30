@@ -3,6 +3,7 @@
 package serialization_test
 
 import (
+	"encoding/binary"
 	"os"
 	"testing"
 
@@ -39,8 +40,7 @@ func TestSerialization(t *testing.T) {
 		assert.Equal(t, 100, msg.Count)
 	})
 	t.Run("matches with confluent serializer", func(t *testing.T) {
-		os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-		defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
+		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
 
 		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
 		assert.NoError(t, err)
@@ -52,10 +52,13 @@ func TestSerialization(t *testing.T) {
 				Count: i,
 			})
 			assert.NoError(t, err)
+			// do a hack to get schema id
+			// schemaID := payload[1:5]
+			schemaID := int(binary.BigEndian.Uint32(payload[1:5]))
 			kpPayload, err := serialization.Encode(BenchmarkMessage{
 				Body:  "my-body",
 				Count: i,
-			}, 1)
+			}, schemaID)
 			assert.NoError(t, err)
 			assert.Equal(t, len(payload), len(kpPayload))
 			assert.Equal(t, payload, kpPayload)

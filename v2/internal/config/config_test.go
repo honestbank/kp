@@ -23,6 +23,20 @@ func TestLoadConfig(t *testing.T) {
 	assert.Nil(t, cfg.SaslMechanism)
 }
 
+func TestGetKafkaConfig(t *testing.T) {
+	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
+	cfg, err := config.LoadConfig[config.KafkaConfig]()
+	assert.NoError(t, err)
+	assert.NotNil(t, config.GetKafkaConfig(*cfg))
+}
+
+func TestGetKafkaConsumerConfig(t *testing.T) {
+	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
+	cfg, err := config.LoadConfig[config.KafkaConfig]()
+	assert.NoError(t, err)
+	assert.NotNil(t, config.GetKafkaConsumerConfig(*cfg))
+}
+
 func TestLoadConfigReturnsError(t *testing.T) {
 	cfg, err := config.LoadConfig[Cfg]()
 	assert.Error(t, err)

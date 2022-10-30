@@ -4,7 +4,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/honestbank/kp/v2/internal/config"
-
 	"github.com/honestbank/kp/v2/internal/schemaregistry"
 	"github.com/honestbank/kp/v2/internal/serialization"
 )
@@ -30,7 +29,7 @@ func (p producer[BodyType, KeyType]) Produce(message KafkaMessage[BodyType, KeyT
 		Value:          value,
 	}
 
-	return p.k.Produce(msg, nil)
+	return p.ProduceRaw(msg)
 }
 
 func (p producer[BodyType, KeyType]) Flush() error {
@@ -39,6 +38,11 @@ func (p producer[BodyType, KeyType]) Flush() error {
 	p.k.Flush(3000)
 
 	return nil
+}
+
+func (p producer[BodyType, KeyType]) ProduceRaw(message *kafka.Message) error {
+	// todo: maybe rename this method so that it tells people to not use it unless they know what they're doing.
+	return p.k.Produce(message, nil)
 }
 
 func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType, KeyType], error) {
@@ -51,31 +55,11 @@ func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType,
 		return nil, err
 	}
 
-	k, err := kafka.NewProducer(getKafkaConfig(*cfg))
+	k, err := kafka.NewProducer(config.GetKafkaConfig(*cfg))
 
 	return producer[MessageType, KeyType]{
 		k:        k,
 		schemaID: *schemaID,
 		topic:    topic,
 	}, nil
-}
-
-func getKafkaConfig(kafkaConfig config.KafkaConfig) *kafka.ConfigMap {
-	cfg := &kafka.ConfigMap{}
-
-	hydrateIfNotNil(cfg, "bootstrap.servers", kafkaConfig.BootstrapServers)
-	hydrateIfNotNil(cfg, "sasl.mechanisms", kafkaConfig.SaslMechanism)
-	hydrateIfNotNil(cfg, "security.protocol", kafkaConfig.SecurityProtocol)
-	hydrateIfNotNil(cfg, "sasl.username", kafkaConfig.Username)
-	hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
-
-	return cfg
-}
-
-func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) {
-	if value == nil {
-		return
-	}
-	// looked at the source code, as of now, there's no error being returned, it's always nil
-	_ = cfg.SetKey(key, *value)
 }

@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/honestbank/kp"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/honestbank/kp"
 )
 
 const retiresCount = 2

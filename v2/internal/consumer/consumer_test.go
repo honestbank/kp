@@ -36,12 +36,11 @@ func TestNew(t *testing.T) {
 		}()
 		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond * 5)
 		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond * 5)
 		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
 		assert.NoError(t, err)
+		p1.Flush()
 		time.Sleep(time.Millisecond * 500)
 		shouldContinue = false
 		time.Sleep(time.Millisecond * 500)

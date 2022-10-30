@@ -13,6 +13,7 @@ type Cfg struct {
 }
 
 func TestLoadConfig(t *testing.T) {
+	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
 	cfg, err := config.LoadConfig[config.KafkaConfig]()
 	assert.NoError(t, err)
 	assert.Nil(t, cfg.Username)

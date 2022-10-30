@@ -16,6 +16,9 @@ func TestGetCount(t *testing.T) {
 	t.Run("returns correct count when there's count in header", func(t *testing.T) {
 		assert.Equal(t, 5, retrycounter.GetCount(&kafka.Message{Headers: []kafka.Header{{Key: "x-retry-count", Value: []byte("5")}}}))
 	})
+	t.Run("returns 0 when there's invalid integer in header", func(t *testing.T) {
+		assert.Equal(t, 0, retrycounter.GetCount(&kafka.Message{Headers: []kafka.Header{{Key: "x-retry-count", Value: []byte("a")}}}))
+	})
 }
 
 func TestSetCount(t *testing.T) {
@@ -25,7 +28,9 @@ func TestSetCount(t *testing.T) {
 		assert.Equal(t, 10, retrycounter.GetCount(message))
 	})
 
-	t.Run("returns correct count when there's count in header", func(t *testing.T) {
-		assert.Equal(t, 5, retrycounter.GetCount(&kafka.Message{Headers: []kafka.Header{{Key: "x-retry-count", Value: []byte("5")}}}))
+	t.Run("sets correct count when there's count in header", func(t *testing.T) {
+		message := &kafka.Message{Headers: []kafka.Header{{Key: "x-retry-count", Value: []byte("5")}}}
+		retrycounter.SetCount(message, 10)
+		assert.Equal(t, 5, retrycounter.GetCount(message))
 	})
 }

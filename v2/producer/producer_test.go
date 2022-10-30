@@ -3,6 +3,7 @@
 package producer_test
 
 import (
+	"encoding/binary"
 	"os"
 	"testing"
 
@@ -74,10 +75,13 @@ func TestNew(t *testing.T) {
 				Count: i,
 			})
 			assert.NoError(t, err)
+			// do a hack to get schema id
+			// schemaID := payload[1:5]
+			schemaID := int(binary.BigEndian.Uint32(payload[1:5]))
 			kPayload, err := serialization.Encode(BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
-			}, 1)
+			}, schemaID)
 			assert.Equal(t, kPayload, payload)
 			assert.Equal(t, len(kPayload), len(payload))
 			err = confluentProducer.Produce(&kafka.Message{

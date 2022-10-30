@@ -18,7 +18,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, cfg.Username)
 	assert.Nil(t, cfg.Password)
-	assert.Nil(t, cfg.BootstrapServers)
+	assert.Equal(t, "localhost", *cfg.BootstrapServers)
 	assert.Nil(t, cfg.SecurityProtocol)
 	assert.Nil(t, cfg.SaslMechanism)
 }

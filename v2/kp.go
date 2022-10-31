@@ -3,12 +3,11 @@ package v2
 import (
 	"time"
 
-	"github.com/honestbank/kp/v2/internal/middleware"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/kp/v2/internal/consumer"
+	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/internal/retrycounter"
 	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/producer"

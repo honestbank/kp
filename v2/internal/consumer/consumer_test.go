@@ -28,10 +28,11 @@ func TestNew(t *testing.T) {
 		go func() {
 			for shouldContinue {
 				message := c.GetMessage()
-				if message != nil {
-					c.Commit(message)
-					numberOfMessage++
+				if message == nil {
+					continue
 				}
+				c.Commit(message)
+				numberOfMessage++
 			}
 		}()
 		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})

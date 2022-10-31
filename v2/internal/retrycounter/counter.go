@@ -22,9 +22,9 @@ func GetCount(message *kafka.Message) int {
 }
 
 func SetCount(message *kafka.Message, count int) {
-	for _, header := range message.Headers {
+	for i, header := range message.Headers {
 		if header.Key == retryCountHeader {
-			header.Value = []byte(strconv.Itoa(count))
+			message.Headers[i] = kafka.Header{Key: retryCountHeader, Value: []byte(strconv.Itoa(count))}
 			return
 		}
 	}

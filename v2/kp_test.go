@@ -3,6 +3,7 @@ package v2_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,6 +18,17 @@ import (
 type MyType struct {
 	Count    int
 	Username string
+}
+
+type MyMw struct {
+}
+
+func (m MyMw) Process(item *kafka.Message, next func(item *kafka.Message) error) error {
+	fmt.Println("Before:")
+	result := next(item)
+	fmt.Printf("After with return value: %v\n", result)
+
+	return result
 }
 
 func TestKP(t *testing.T) {
@@ -41,9 +53,11 @@ func TestKP(t *testing.T) {
 		kp.Stop()
 	}()
 	err = kp.WithRetryOrPanic("kp-topic-retry", retryCount).
+		AddMiddleware(MyMw{}).
 		WithDeadletterOrPanic("kp-topic-dlt").
 		Run(func(message MyType) error {
 			time.Sleep(time.Millisecond * 200)
+			fmt.Printf("%v\n", message)
 			messageProcessCount++
 
 			return errors.New("some error")

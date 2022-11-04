@@ -34,14 +34,15 @@ func (r *stack[IN, OUT]) AddMiddleware(mw Middleware[IN, OUT]) {
 }
 
 func (r *stack[IN, OUT]) Process(ctx context.Context, options IN) OUT {
-	var next func(c context.Context, item IN) OUT = nil
-	middlewares := append(r.middlewares)
-	next = func(c context.Context, item IN) OUT {
-		nextMw := middlewares[0]
+	var nextMiddleware func(c context.Context, item IN) OUT = nil
+	middlewares := make([]Middleware[IN, OUT], len(r.middlewares))
+	copy(middlewares, r.middlewares)
+	nextMiddleware = func(c context.Context, item IN) OUT {
+		currentMw := middlewares[0]
 		middlewares = middlewares[1:]
-		return nextMw.Process(c, item, next)
+		return currentMw.Process(c, item, nextMiddleware)
 	}
-	return next(ctx, options)
+	return nextMiddleware(ctx, options)
 }
 
 func New[IN, OUT any]() Processor[IN, OUT] {

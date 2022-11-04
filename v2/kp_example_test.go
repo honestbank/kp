@@ -29,7 +29,7 @@ func ExampleNew() {
 	}()
 	processor.WithRetryOrPanic("user-logged-in-rewards-processor-retry", 3).
 		WithDeadletterOrPanic("user-logged-in-rewards-processor-dlt").
-		Run(func(ev UserLoggedInEvent) error {
+		Run(func(ctx context.Context, ev UserLoggedInEvent) error {
 			fmt.Printf("%s|", ev.UserID)
 			return errors.New("some error")
 		})

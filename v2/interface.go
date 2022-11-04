@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"context"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/honestbank/kp/v2/internal/middleware"
@@ -13,5 +15,5 @@ type KafkaProcessor[MessageType any] interface {
 	WithDeadletter(deadLetterTopic string) (KafkaProcessor[MessageType], error)
 	WithDeadletterOrPanic(deadletterTopic string) KafkaProcessor[MessageType]
 	Stop()
-	Run(processor func(message MessageType) error) error
+	Run(processor func(ctx context.Context, message MessageType) error) error
 }

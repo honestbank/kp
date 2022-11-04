@@ -1,11 +1,10 @@
 package v2
 
 import (
-	"time"
+	"context"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/kp/v2/internal/consumer"
 	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/internal/retrycounter"
@@ -20,7 +19,6 @@ type kp[MessageType any] struct {
 	retry            func(message *kafka.Message)
 	sendToDeadLetter func(message *kafka.Message)
 	cleanupCallbacks []func()
-	backoff          backoff_policy.BackoffPolicy
 	shouldContinue   bool
 }
 
@@ -90,17 +88,17 @@ func (t *kp[MessageType]) Stop() {
 	t.shouldContinue = false
 }
 
-func (t *kp[MessageType]) Run(processor func(message MessageType) error) error {
+func (t *kp[MessageType]) Run(processor func(ctx context.Context, message MessageType) error) error {
 	c, err := consumer.New(t.topics, t.applicationName)
 	if err != nil {
 		return err
 	}
-	t.chain.AddMiddleware(middleware.FinalMiddleware[*kafka.Message, error](func(msg *kafka.Message) error {
+	t.chain.AddMiddleware(middleware.FinalMiddleware[*kafka.Message, error](func(ctx context.Context, msg *kafka.Message) error {
 		message, err := serialization.Decode[MessageType](msg.Value)
 		if err != nil {
 			// do something with the err
 		}
-		err = processor(*message)
+		err = processor(ctx, *message)
 		if err != nil {
 			t.retry(msg)
 		}
@@ -112,7 +110,8 @@ func (t *kp[MessageType]) Run(processor func(message MessageType) error) error {
 		if msg == nil {
 			continue
 		}
-		t.chain.Process(msg)
+		ctx := context.Background()
+		t.chain.Process(ctx, msg)
 	}
 	for _, callback := range t.cleanupCallbacks {
 		callback()
@@ -128,7 +127,6 @@ func New[MessageType any](topicName string, applicationName string) KafkaProcess
 		retry:            func(message *kafka.Message) {},
 		sendToDeadLetter: func(message *kafka.Message) {},
 		topics:           []string{topicName},
-		backoff:          backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*0, 0), // no backoff by default
 		shouldContinue:   true,
 	}
 }

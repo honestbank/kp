@@ -41,8 +41,8 @@ func TestKP(t *testing.T) {
 	_, err = c.CreateTopics(context.Background(), []kafka.TopicSpecification{{Topic: "kp-topic", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-retry", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-dlt", ReplicationFactor: 1, NumPartitions: 1}})
 	assert.NoError(t, err)
 
-	p, err := producer.New[MyType, string]("kp-topic")
-	p.Produce(producer.KafkaMessage[MyType, string]{Body: MyType{Username: "username1", Count: 1}})
+	p, err := producer.New[MyType]("kp-topic")
+	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
 	p.Flush()
 	assert.NoError(t, err)
 	kp := v2.New[MyType]("kp-topic", "integration-tests")

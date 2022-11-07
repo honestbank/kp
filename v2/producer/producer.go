@@ -1,6 +1,8 @@
 package producer
 
 import (
+	"context"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/honestbank/kp/v2/internal/config"
@@ -8,14 +10,14 @@ import (
 	"github.com/honestbank/kp/v2/internal/serialization"
 )
 
-type producer[BodyType any, KeyType KeyTypes] struct {
+type producer[BodyType any] struct {
 	schemaID int
 	k        *kafka.Producer
 	topic    string
 }
 
-func (p producer[BodyType, KeyType]) Produce(message KafkaMessage[BodyType, KeyType]) error {
-	value, err := serialization.Encode(message.Body, p.schemaID)
+func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error {
+	value, err := serialization.Encode(message, p.schemaID)
 	if err != nil {
 		return err
 	}
@@ -32,7 +34,7 @@ func (p producer[BodyType, KeyType]) Produce(message KafkaMessage[BodyType, KeyT
 	return p.ProduceRaw(msg)
 }
 
-func (p producer[BodyType, KeyType]) Flush() error {
+func (p producer[BodyType]) Flush() error {
 	// I just felt like 3000 because 3 second should be enough for messages to be flushed
 	// we'll need to optimize this as we go
 	p.k.Flush(3000)
@@ -40,14 +42,14 @@ func (p producer[BodyType, KeyType]) Flush() error {
 	return nil
 }
 
-func (p producer[BodyType, KeyType]) ProduceRaw(message *kafka.Message) error {
+func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
 	// todo: maybe rename this method so that it tells people to not use it unless they know what they're doing.
 	message.TopicPartition.Topic = &p.topic
 	message.TopicPartition.Partition = kafka.PartitionAny
 	return p.k.Produce(message, nil)
 }
 
-func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType, KeyType], error) {
+func New[MessageType any](topic string) (Producer[MessageType], error) {
 	cfg, err := config.LoadConfig[config.KafkaConfig]()
 	if err != nil {
 		return nil, err
@@ -59,7 +61,7 @@ func New[MessageType any, KeyType KeyTypes](topic string) (Producer[MessageType,
 
 	k, err := kafka.NewProducer(config.GetKafkaConfig(*cfg))
 
-	return producer[MessageType, KeyType]{
+	return producer[MessageType]{
 		k:        k,
 		schemaID: *schemaID,
 		topic:    topic,

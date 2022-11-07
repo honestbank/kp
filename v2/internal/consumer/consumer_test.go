@@ -3,6 +3,7 @@
 package consumer_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ func TestNew(t *testing.T) {
 	t.Run("can read from kafka", func(t *testing.T) {
 		c, err := consumer.New([]string{"consumer-integration-topic-1"}, "consumer-group-1")
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg, string]("consumer-integration-topic-1")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-1")
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
@@ -35,11 +36,11 @@ func TestNew(t *testing.T) {
 				numberOfMessage++
 			}
 		}()
-		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p1.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
-		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p1.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
-		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p1.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
 		time.Sleep(time.Millisecond * 500)
 		p1.Flush()
@@ -51,9 +52,9 @@ func TestNew(t *testing.T) {
 	t.Run("can read from multiple topics", func(t *testing.T) {
 		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, "consumer-group-2")
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg, string]("consumer-integration-topic-2")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-2")
 		assert.NoError(t, err)
-		p2, err := producer.New[MyMsg, string]("consumer-integration-topic-3")
+		p2, err := producer.New[MyMsg]("consumer-integration-topic-3")
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
@@ -65,11 +66,11 @@ func TestNew(t *testing.T) {
 				}
 			}
 		}()
-		err = p1.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p1.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
-		err = p2.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p2.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
-		err = p2.Produce(producer.KafkaMessage[MyMsg, string]{Body: MyMsg{Time: time.Now().Format(time.RFC3339Nano)}})
+		err = p2.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
 		assert.NoError(t, err)
 		p1.Flush()
 		p2.Flush()

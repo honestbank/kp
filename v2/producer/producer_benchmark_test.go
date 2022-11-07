@@ -3,6 +3,7 @@
 package producer_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -24,7 +25,7 @@ func BenchmarkProducer(b *testing.B) {
 	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
 	defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
 
-	kp, err := producer.New[BenchmarkMessage, int]("topic-kp")
+	kp, err := producer.New[BenchmarkMessage]("topic-kp")
 	assert.NoError(b, err)
 	defer kp.Flush()
 
@@ -39,11 +40,9 @@ func BenchmarkProducer(b *testing.B) {
 
 	b.Run("kp producer", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err := kp.Produce(producer.KafkaMessage[BenchmarkMessage, int]{
-				Body: BenchmarkMessage{
-					Body:  "hello-world",
-					Count: i,
-				},
+			err := kp.Produce(context.Background(), BenchmarkMessage{
+				Body:  "hello-world",
+				Count: i,
 			})
 			assert.NoError(b, err)
 		}

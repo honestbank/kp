@@ -17,14 +17,6 @@ var operationDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Buckets: []float64{1, 5, 50, 200, 500, 1_000, 2_000, 5_000, 15_000, 45_000},
 }, []string{"result", "error"})
 
-var totalProcessed = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Name: "message_processed_total",
-		Help: "Number of messages processed.",
-	},
-	[]string{"result", "error"},
-)
-
 type measurementMiddleware struct {
 	pushClient *push.Pusher
 }
@@ -43,13 +35,11 @@ func (m measurementMiddleware) Process(ctx context.Context, item *kafka.Message,
 	startTime := time.Now()
 	err := next(ctx, item)
 	if err != nil {
-		totalProcessed.WithLabelValues("failure", err.Error()).Inc()
 		operationDuration.WithLabelValues("failure", err.Error()).Observe(float64(time.Since(startTime).Milliseconds()))
 
 		return err
 	}
 	operationDuration.WithLabelValues("success", "").Observe(float64(time.Since(startTime).Milliseconds()))
-	totalProcessed.WithLabelValues("success", "").Inc()
 
 	return err
 }
@@ -57,8 +47,7 @@ func (m measurementMiddleware) Process(ctx context.Context, item *kafka.Message,
 func Measure(gatewayURL string, applicationName string) middleware.Middleware[*kafka.Message, error] {
 	pushClient := push.New(gatewayURL, applicationName).
 		Grouping("framework", "kp").
-		Collector(operationDuration).
-		Collector(totalProcessed)
+		Collector(operationDuration)
 
 	mw := measurementMiddleware{
 		pushClient: pushClient,

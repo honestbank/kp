@@ -23,7 +23,7 @@ func TestMeasure(t *testing.T) {
 		called := false
 		middlewares.Measure("localhost:9091", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			called = true
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 550)
 			return nil
 		})
 		assert.True(t, called)
@@ -36,7 +36,7 @@ func TestMeasure(t *testing.T) {
 	time.Sleep(time.Second * 6)
 	t.Run("pushes to prometheus", func(t *testing.T) {
 		success200, _ := regexp.Compile(`kp_operation_time_milliseconds_bucket\{.+success.+le="200"\}.+`)
-		success500, _ := regexp.Compile(`kp_operation_time_milliseconds_bucket\{.+success.+le="500"\}.+`)
+		success500, _ := regexp.Compile(`kp_operation_time_milliseconds_bucket\{.+success.+le="1000"\}.+`)
 		res, err := http.Get("http://localhost:9091/metrics")
 		assert.NoError(t, err)
 		defer res.Body.Close()

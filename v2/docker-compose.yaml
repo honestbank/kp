@@ -70,3 +70,8 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
+
+  push_gateway:
+    image: bitnami/pushgateway:latest
+    ports:
+      - "9091:9091"

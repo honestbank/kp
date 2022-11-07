@@ -40,7 +40,7 @@ func (t *kp[MessageType]) WithDeadletterOrPanic(deadletterTopic string) KafkaPro
 
 func (t *kp[MessageType]) WithRetry(retryTopic string, retryCount int) (KafkaProcessor[MessageType], error) {
 	t.topics = append(t.topics, retryTopic)
-	p, err := producer.New[MessageType, int](retryTopic)
+	p, err := producer.New[MessageType](retryTopic)
 	if err != nil {
 		return t, err
 	}
@@ -64,7 +64,7 @@ func (t *kp[MessageType]) WithRetry(retryTopic string, retryCount int) (KafkaPro
 }
 
 func (t *kp[MessageType]) WithDeadletter(deadLetterTopic string) (KafkaProcessor[MessageType], error) {
-	p, err := producer.New[MessageType, int](deadLetterTopic)
+	p, err := producer.New[MessageType](deadLetterTopic)
 	if err != nil {
 		return nil, err
 	}

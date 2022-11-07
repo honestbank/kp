@@ -51,12 +51,12 @@ func setup() {
 	if err != nil {
 		panic(err)
 	}
-	p, err := producer.New[UserLoggedInEvent, int]("user-logged-in")
+	p, err := producer.New[UserLoggedInEvent]("user-logged-in")
 	if err != nil {
 		panic(err)
 	}
 	now := time.Now().Format(time.RFC3339Nano)
 	event := UserLoggedInEvent{UserID: "1", Timestamp: now}
-	p.Produce(producer.KafkaMessage[UserLoggedInEvent, int]{Body: event})
+	p.Produce(context.Background(), event)
 	p.Flush()
 }

@@ -3,6 +3,7 @@
 package producer_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -24,16 +25,14 @@ func TestNewCanConnectToLabEnvironment(t *testing.T) {
 		_ = os.Unsetenv("KP_SECURITY_PROTOCOL")
 	}()
 	t.Run("produce through kp", func(t *testing.T) {
-		kp, err := producer.New[BenchmarkMessage, int]("topic-kp")
+		kp, err := producer.New[BenchmarkMessage]("topic-kp")
 		assert.NoError(t, err)
 		defer kp.Flush()
 
 		for i := 0; i < 100; i++ {
-			err := kp.Produce(producer.KafkaMessage[BenchmarkMessage, int]{
-				Body: BenchmarkMessage{
-					Body:  "hello-world",
-					Count: i,
-				},
+			err := kp.Produce(context.Background(), BenchmarkMessage{
+				Body:  "hello-world",
+				Count: i,
 			})
 			assert.NoError(t, err)
 		}

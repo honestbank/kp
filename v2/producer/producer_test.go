@@ -3,6 +3,7 @@
 package producer_test
 
 import (
+	"context"
 	"encoding/binary"
 	"os"
 	"testing"
@@ -32,7 +33,7 @@ func TestNewProducer(t *testing.T) {
 	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
 	t.Run("schema registry", func(t *testing.T) {
 		t.Run("when a producer is initialized, schema is automatically registered", func(t *testing.T) {
-			_, err := producer.New[MyMessage, int]("test-topic-3")
+			_, err := producer.New[MyMessage]("test-topic-3")
 			assert.NoError(t, err)
 			client, err := schemaregistry.NewClient(schemaregistry.NewConfigWithAuthentication(
 				"http://localhost:8081",
@@ -45,13 +46,13 @@ func TestNewProducer(t *testing.T) {
 			assert.Equal(t, "test-topic-3-value", res.Subject)
 		})
 		t.Run("fails initializing producer if there's a breaking change in schema", func(t *testing.T) {
-			_, err := producer.New[MyMessage, int]("test-topic-1")
-			_, err = producer.New[MyMessageBreaking, int]("test-topic-1")
+			_, err := producer.New[MyMessage]("test-topic-1")
+			_, err = producer.New[MyMessageBreaking]("test-topic-1")
 			assert.Error(t, err)
 		})
 		t.Run("non breaking change allows initialization", func(t *testing.T) {
-			_, err := producer.New[MyMessage, int]("test-topic-2")
-			_, err = producer.New[MyMessage, int]("test-topic-2")
+			_, err := producer.New[MyMessage]("test-topic-2")
+			_, err = producer.New[MyMessage]("test-topic-2")
 			assert.NoError(t, err)
 		})
 	})
@@ -94,16 +95,14 @@ func TestNew(t *testing.T) {
 	t.Run("produce through kp", func(t *testing.T) {
 		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
 		t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
-		kp, err := producer.New[BenchmarkMessage, int]("topic-kp")
+		kp, err := producer.New[BenchmarkMessage]("topic-kp")
 		assert.NoError(t, err)
 		defer kp.Flush()
 
 		for i := 0; i < 25000; i++ {
-			err := kp.Produce(producer.KafkaMessage[BenchmarkMessage, int]{
-				Body: BenchmarkMessage{
-					Body:  "hello-world",
-					Count: i,
-				},
+			err := kp.Produce(context.Background(), BenchmarkMessage{
+				Body:  "hello-world",
+				Count: i,
 			})
 			assert.NoError(t, err)
 		}

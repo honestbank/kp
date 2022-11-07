@@ -23,11 +23,13 @@ type measurementMiddleware struct {
 
 func (m measurementMiddleware) SetupBackgroundJob() {
 	go func() {
-		err := m.pushClient.Push()
-		if err != nil {
-			fmt.Printf("error pushing metrics to gateway: %v\n", err)
+		for {
+			err := m.pushClient.Push()
+			if err != nil {
+				fmt.Printf("error pushing metrics to gateway: %v\n", err)
+			}
+			time.Sleep(time.Second * 5)
 		}
-		time.Sleep(time.Second * 5)
 	}()
 }
 

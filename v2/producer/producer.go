@@ -8,6 +8,7 @@ import (
 	"github.com/honestbank/kp/v2/internal/config"
 	"github.com/honestbank/kp/v2/internal/schemaregistry"
 	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/internal/tracing"
 )
 
 type producer[BodyType any] struct {
@@ -30,6 +31,7 @@ func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error
 		TopicPartition: partition,
 		Value:          value,
 	}
+	tracing.InjectTraceHeaders(ctx, msg)
 
 	return p.ProduceRaw(msg)
 }

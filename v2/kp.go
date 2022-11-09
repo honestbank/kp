@@ -96,14 +96,10 @@ func (t *kp[MessageType]) Run(processor func(ctx context.Context, message Messag
 	t.chain.AddMiddleware(middleware.FinalMiddleware[*kafka.Message, error](func(ctx context.Context, msg *kafka.Message) error {
 		message, err := serialization.Decode[MessageType](msg.Value)
 		if err != nil {
-			// do something with the err
+			// do something with the error
+			return err // most likely, return a non-retryable error
 		}
-		err = processor(ctx, *message)
-		if err != nil {
-			t.retry(msg)
-		}
-
-		return err
+		return processor(ctx, *message)
 	}))
 	for t.shouldContinue {
 		msg := c.GetMessage()
@@ -111,7 +107,14 @@ func (t *kp[MessageType]) Run(processor func(ctx context.Context, message Messag
 			continue
 		}
 		ctx := context.Background()
-		t.chain.Process(ctx, msg)
+		err = t.chain.Process(ctx, msg)
+		if err != nil {
+			t.retry(msg)
+		}
+		// retry and immediately commit
+		// what if, someone panics HERE
+		// panic("...")
+		_ = c.Commit(msg) // todo: remove auto commit as well
 	}
 	for _, callback := range t.cleanupCallbacks {
 		callback()

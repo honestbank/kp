@@ -15,7 +15,7 @@ import (
 type tracingMw struct{}
 
 func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
-	tracer := otel.GetTracerProvider().Tracer("empty")
+	tracer := otel.GetTracerProvider().Tracer("kp")
 	ctx, span := tracer.Start(tracing.ExtractTraceContext(ctx, item), "process")
 	err := next(ctx, item)
 	if err != nil {
@@ -31,9 +31,5 @@ func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(c
 }
 
 func Tracing() (middleware.Middleware[*kafka.Message, error], error) {
-	tp := otel.GetTracerProvider()
-	if tp == nil {
-		return nil, errors.New("trace provider is not set")
-	}
 	return tracingMw{}, nil
 }

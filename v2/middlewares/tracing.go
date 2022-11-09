@@ -17,14 +17,17 @@ type tracingMw struct{}
 func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
 	tracer := otel.GetTracerProvider().Tracer("empty")
 	ctx, span := tracer.Start(tracing.ExtractTraceContext(ctx, item), "process")
-	res := next(ctx, item)
+	err := next(ctx, item)
+	if err != nil {
+		span.RecordError(err)
+	}
 	span.End()
 	// we want to close before re-producing the message
 	if kafkaheaders.Get("traceparent", item) == nil { // let's ask.
 		tracing.InjectTraceHeaders(ctx, item)
 	}
 
-	return res
+	return err
 }
 
 func Tracing() (middleware.Middleware[*kafka.Message, error], error) {

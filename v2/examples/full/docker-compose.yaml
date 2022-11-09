@@ -1,0 +1,146 @@
+version: '2'
+services:
+  push_gateway:
+    image: bitnami/pushgateway:latest
+    ports:
+      - "9091:9091"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-server:7.2.0
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--list", "--zookeeper", "zookeeper:2181"]
+      interval: 30s
+      timeout: 30s
+      retries: 10
+
+  schema_registry:
+    image: confluentinc/cp-schema-registry:7.2.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.2.0
+    hostname: control-center
+    container_name: control-center
+    depends_on:
+      - broker
+      - schema_registry
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
+  tempo:
+    image: grafana/tempo:1.5.0
+    command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./.extras/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"   # tempo
+      - "9411:9411"  # jaeger ingest
+      - "14268:14268"
+      - "6831:6831"
+      - "4317:4317"
+
+  tempo_query:
+    image: grafana/tempo-query:1.4.1
+    command: [ "--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml" ]
+    volumes:
+      - ./.extras/tempo-query.yaml:/etc/tempo-query.yaml
+    ports:
+      - "16686:16686"  # jaeger-ui
+    depends_on:
+      - tempo
+  sleep:
+    image: alpine
+    command: "sh -c 'sleep 90'"
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      KP_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      COLLECTOR_URL: http://tempo:14268/api/traces
+      KP_SCHEMA_REGISTRY_ENDPOINT: http://schema_registry:8081
+    depends_on:
+      sleep:
+        condition: service_completed_successfully
+    ports:
+      - "8888:8888"
+    command:
+      - ./main
+      - server
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - ./main
+      - worker
+    environment:
+      KP_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      COLLECTOR_URL: http://tempo:14268/api/traces
+      KP_SCHEMA_REGISTRY_ENDPOINT: http://schema_registry:8081
+    depends_on:
+      - web
+#  grafana:
+#    image: grafana/grafana:main   # track main as search is under active development
+#    volumes:
+#      - ./.extras/grafana.ini:/etc/grafana/grafana.ini
+#      - ./.extras/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+#    environment:
+#      - GF_AUTH_ANONYMOUS_ENABLED=true
+#      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+#      - GF_AUTH_DISABLE_LOGIN_FORM=true
+#    ports:
+#      - "3000:3000"

@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"context"
-	"errors"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.opentelemetry.io/otel"
@@ -30,6 +29,6 @@ func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(c
 	return err
 }
 
-func Tracing() (middleware.Middleware[*kafka.Message, error], error) {
-	return tracingMw{}, nil
+func Tracing() middleware.Middleware[*kafka.Message, error] {
+	return tracingMw{}
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Make a request</title>
+</head>
+<body>
+<form id="form">
+    <input type="email" name="email" id="email" placeholder="email" />
+    <button id="submit" type="submit">Submit</button>
+</form>
+<div id="traceID">
+    submit an email to get trace ID
+</div>
+</body>
+<script type="application/javascript">
+    const form = document.querySelector("#form")
+    const traceIDDiv = document.querySelector("#traceID")
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const input = document.querySelector("#email")
+        try {
+            const response = await fetch("/save", {method: "POST", body: JSON.stringify({email: input.value}), headers: {"content-type": "application/json"}})
+            const traceID = response.headers.get("traceparent").split("-")[1]
+            traceIDDiv.innerHTML = `<a target="_blank" href="http://localhost:16686/trace/${traceID}">${traceID}</a>`
+        } catch (e) {
+            console.error(e)
+        }
+    })
+</script>
+</html>

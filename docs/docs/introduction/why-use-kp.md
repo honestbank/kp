@@ -11,6 +11,11 @@ KP provides everything out of the box. With one line each, you can configure bac
 
 Take the following example:
 
+:::tip
+Please check [this page](../introduction/configuration.md) for detailed configuration option
+:::
+
+
 ```go
 package main
 

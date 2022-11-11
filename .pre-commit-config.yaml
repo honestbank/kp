@@ -1,6 +1,6 @@
 # DO NOT CHANGE. This file is being managed from a central repository
 # To know more simply visit https://github.com/honestbank/.github/blob/main/docs/about.md
-
+exclude: docs/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0

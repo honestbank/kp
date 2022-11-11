@@ -1,0 +1,16 @@
+name: deploy-docs
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: deploy-to-gh-pages
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: git config user.name github-actions
+      - run: git config user.email github-actions@github.com
+      - run: npm run deploy

@@ -3,10 +3,15 @@ import clsx from 'clsx';
 import styles from './styles.module.css';
 import Translate, {translate} from "@docusaurus/Translate";
 import Lottie from 'lottie-react'
+// @ts-ignore
 import code from '../../../static/lotties/code.json'
+// @ts-ignore
 import focus from '../../../static/lotties/focus.json'
+// @ts-ignore
 import tracing from '../../../static/lotties/tracing.json'
+// @ts-ignore
 import measurements from '../../../static/lotties/measurements.json'
+// @ts-ignore
 import easy from '../../../static/lotties/easy'
 
 type FeatureItem = {

@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Introduction {#introduction}
+# Introduction
 Middlewares are the core of KP, almost every feature except the retry and deadletters are built with middlewares.
 They help us write feature in isolation, it makes it easier for testing and maintaining.
 

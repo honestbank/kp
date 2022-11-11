@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Contributing {#contributing}
+# Contributing
 Keeping the core of kp small enables us to main this project a little easier.
 We will try our best to stick to the core that already exists with only minimal changes.
 
@@ -25,13 +25,13 @@ Searching through existing issues/PRs before attempting to send a PR is always t
 Even if you're sure no one is working on your thing, making sure we're onboard with what you're planning will save you some time.
 :::
 
-## Code Contributions
+## Code Contributions {#code-contributions}
 First clone this repository, enter `v2` directory and run `go mod download && go mod vendor` this should download all dependencies to your vendor directory.
 
 Make sure you install pre-commit hook and you follow the same standard the project is already following.
 If you're in doubt, you can always discuss in github.
 
-## Running tests
+## Running tests {#running-tests}
 Because of the nature of the project, we have more integration tests.
 If you're working on a middleware, feel free to run unit tests on just the middleware package.
 Otherwise, feel free to use docker compose to start entire stack and run all tests including integration tests using `integration` build flag.

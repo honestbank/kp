@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Tracing {#tracing}
+# Tracing
 Chances are if you have kafka, you also want a distributed tracing. Because tracing is so common, we've included tracing middleware.
 
 We don't control where the traces go to or in which format, we simply create spans.

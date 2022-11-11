@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# Write your own {#write-your-own}
+# Write your own
 There could be cases that we've not covered in kp. In those scenarios you can write your own middleware. It's very easy.
 
 All Middlewares implement the interface `Middleware[*kafka.Message, error]`, so that's all we have to do.

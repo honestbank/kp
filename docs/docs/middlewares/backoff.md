@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 ---
-# Backoff {#backoff}
+# Backoff
 When the worker starts receiving failures, ideally, it should slow down and let the underlying services recover. Doing this is as simple as adding 1 middleware like in the following example:
 
 :::tip

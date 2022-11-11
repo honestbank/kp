@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Deadletters {#deadletters}
+# Deadletters
 If a particular message fails the configured number of times, it's simply ignored. But most of the time that's not what we want. In this example, it sends the message to a deadletter topic from where you can send alerts and check why they failed.
 
 :::info

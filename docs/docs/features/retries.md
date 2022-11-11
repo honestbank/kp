@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Retries {#retries}
+# Retries
 When there's an error while processing a message, most of the time we want to try again.
 But we might not want to try at the same time causing the consumer to lag.
 Retry feature sends failed messages into a retry topic and processes it when it receives the message.

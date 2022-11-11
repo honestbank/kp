@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 ---
-# Measurements {#measurements}
+# Measurements
 Every service needs some kind of measurements. KP comes with a prometheus push metric middleware.
 
 :::warning

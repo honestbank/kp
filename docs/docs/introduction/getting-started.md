@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Getting Started with KP {#getting-started}
+# Getting Started with KP
 KP is a kafka message processing framework which makes retries, deadletters, tracing, measurements, etc easy.
 
 It helps you write applications without worrying too much about the retries, deadlettering, backing off when things go wrong, etc. As a developer, simply focus on business logic and business logic only.

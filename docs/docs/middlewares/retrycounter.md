@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Retry Count {#retry-count}
+# Retry Count
 This is an informational middleware. It doesn't change the execution in any way.
 The purpose of this middleware is to provide an API to get the retry count from kafka message.
 If we're seeing the message for the first time, it sets the value as 0.

@@ -70,6 +70,12 @@ const config = {
             label: 'Middlewares',
           },
           {
+            type: 'doc',
+            docId: '/category/examples',
+            position: 'right',
+            label: 'Examples',
+          },
+          {
             href: 'https://github.com/honestbank/kp',
             label: 'GitHub',
             position: 'right',

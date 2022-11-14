@@ -40,7 +40,7 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	defer setupTracing()() // this is important and not included in kp by default
+	defer setupTracing()() // this is important and not included in kp
 	applicationName := "send-login-notification-worker"
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)

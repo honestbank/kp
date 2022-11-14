@@ -23,6 +23,10 @@ To use kp, you'll need the following:
 - Schema registry to register schema of your topics (can't be disabled currently, maybe in future)
 - `cgo` needs to be enabled during build of your go code.
 
+:::tip
+Please check [this page](../introduction/configuration.md) for detailed configuration option
+:::
+
 ## Basic Example (publishing messages) {#basic-example-producer}
 A producer can be initialized with a type, and it'll automatically publish the type to schema registry.
 It requires some environment variables to be set.

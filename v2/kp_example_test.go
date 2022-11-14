@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/internal/config"
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/producer"
 )
 
@@ -22,7 +21,7 @@ type UserLoggedInEvent struct {
 func ExampleNew() {
 	setup()
 
-	processor := v2.New[UserLoggedInEvent]("user-logged-in", "user-logged-in-rewards-processor")
+	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
 	go func() {
 		time.Sleep(time.Second * 10)
 		processor.Stop()
@@ -37,13 +36,8 @@ func ExampleNew() {
 }
 
 func setup() {
-	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	os.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
-	cfg, err := config.LoadConfig[config.KafkaConfig]()
-	if err != nil {
-		panic(err)
-	}
-	c, err := kafka.NewAdminClient(config.GetKafkaConfig(*cfg))
+	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}}
+	c, err := kafka.NewAdminClient(config.GetKafkaConfig(cfg.KafkaConfig))
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +45,7 @@ func setup() {
 	if err != nil {
 		panic(err)
 	}
-	p, err := producer.New[UserLoggedInEvent]("user-logged-in")
+	p, err := producer.New[UserLoggedInEvent]("user-logged-in", cfg)
 	if err != nil {
 		panic(err)
 	}

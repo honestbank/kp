@@ -20,16 +20,16 @@ type MyMsg struct {
 }
 
 func TestNew(t *testing.T) {
-	t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
 	kafkaConfig := config.Kafka{
 		BootstrapServers:  "localhost",
 		ConsumerGroupName: "consumer-group-1",
 	}
+	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8081"}
+	kpConfig := config.KPConfig{KafkaConfig: kafkaConfig, SchemaRegistryConfig: schemaRegistryConfig}
 	t.Run("can read from kafka", func(t *testing.T) {
 		c, err := consumer.New([]string{"consumer-integration-topic-1"}, kafkaConfig.WithDefaults())
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg]("consumer-integration-topic-1")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-1", kpConfig)
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
@@ -58,9 +58,9 @@ func TestNew(t *testing.T) {
 	t.Run("can read from multiple topics", func(t *testing.T) {
 		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, kafkaConfig.WithDefaults())
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg]("consumer-integration-topic-2")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-2", kpConfig)
 		assert.NoError(t, err)
-		p2, err := producer.New[MyMsg]("consumer-integration-topic-3")
+		p2, err := producer.New[MyMsg]("consumer-integration-topic-3", kpConfig)
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {

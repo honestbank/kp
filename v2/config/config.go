@@ -22,10 +22,10 @@ func (s Kafka) WithDefaults() Kafka {
 	return Kafka{
 		ConsumerGroupName:        s.ConsumerGroupName,
 		BootstrapServers:         s.BootstrapServers,
-		SaslMechanism:            defaultIfNil(s.SaslMechanism, ""),
-		SecurityProtocol:         defaultIfNil(s.SecurityProtocol, ""),
-		Username:                 defaultIfNil(s.Username, ""),
-		Password:                 defaultIfNil(s.Password, ""),
+		SaslMechanism:            s.SaslMechanism,
+		SecurityProtocol:         s.SecurityProtocol,
+		Username:                 s.Username,
+		Password:                 s.Password,
 		ConsumerSessionTimeoutMs: defaultIfNil(s.ConsumerSessionTimeoutMs, 6000),
 		ConsumerAutoOffsetReset:  defaultIfNil(s.ConsumerAutoOffsetReset, "earliest"),
 	}

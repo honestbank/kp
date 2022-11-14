@@ -99,8 +99,6 @@ func TestNew(t *testing.T) {
 		}
 	})
 	t.Run("produce through kp", func(t *testing.T) {
-		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-		t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
 		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
 		assert.NoError(t, err)
 		defer kp.Flush()

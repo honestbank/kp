@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
-      - run: cd docs
-      - run: npm ci
       - run: git config user.name github-actions
       - run: git config user.email github-actions@github.com
-      - run: npm run deploy
+      - run: cd docs && npm ci && npm run deploy

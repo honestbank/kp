@@ -12,6 +12,8 @@ import (
 	"github.com/honestbank/kp/v2/producer"
 )
 
+type Processor[MessageType any] func(ctx context.Context, item MessageType) error
+
 type kp[MessageType any] struct {
 	topics           []string
 	applicationName  string
@@ -96,7 +98,7 @@ func (t *kp[MessageType]) Stop() {
 	t.shouldContinue = false
 }
 
-func (t *kp[MessageType]) Run(processor func(ctx context.Context, message MessageType) error) error {
+func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 	c, err := consumer.New(t.topics, t.applicationName)
 	if err != nil {
 		return err
@@ -131,9 +133,9 @@ func (t *kp[MessageType]) Run(processor func(ctx context.Context, message Messag
 	return nil
 }
 
-func New[MessageType any](topicName string, applicationName string) KafkaProcessor[MessageType] {
+func New[MessageType any](topicName string, consumerGroupID string) KafkaProcessor[MessageType] {
 	return (&kp[MessageType]{
-		applicationName:  applicationName,
+		applicationName:  consumerGroupID,
 		chain:            middleware.New[*kafka.Message, error](),
 		retry:            func(message *kafka.Message) {},
 		sendToDeadLetter: func(message *kafka.Message) {},

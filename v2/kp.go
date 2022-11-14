@@ -3,6 +3,8 @@ package v2
 import (
 	"context"
 
+	"github.com/honestbank/kp/v2/config"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/honestbank/kp/v2/internal/consumer"
@@ -16,7 +18,7 @@ type Processor[MessageType any] func(ctx context.Context, item MessageType) erro
 
 type kp[MessageType any] struct {
 	topics           []string
-	applicationName  string
+	config           config.KPConfig
 	chain            middleware.Processor[*kafka.Message, error]
 	retry            func(message *kafka.Message)
 	sendToDeadLetter func(message *kafka.Message)
@@ -50,7 +52,7 @@ func (t *kp[MessageType]) init() KafkaProcessor[MessageType] {
 
 func (t *kp[MessageType]) WithRetry(retryTopic string, retryCount int) (KafkaProcessor[MessageType], error) {
 	t.topics = append(t.topics, retryTopic)
-	p, err := producer.New[MessageType](retryTopic)
+	p, err := producer.New[MessageType](retryTopic, t.config)
 	if err != nil {
 		return t, err
 	}
@@ -74,7 +76,7 @@ func (t *kp[MessageType]) WithRetry(retryTopic string, retryCount int) (KafkaPro
 }
 
 func (t *kp[MessageType]) WithDeadletter(deadLetterTopic string) (KafkaProcessor[MessageType], error) {
-	p, err := producer.New[MessageType](deadLetterTopic)
+	p, err := producer.New[MessageType](deadLetterTopic, t.config)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (t *kp[MessageType]) Stop() {
 }
 
 func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
-	c, err := consumer.New(t.topics, t.applicationName)
+	c, err := consumer.New(t.topics, t.config.KafkaConfig)
 	if err != nil {
 		return err
 	}
@@ -133,9 +135,9 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 	return nil
 }
 
-func New[MessageType any](topicName string, consumerGroupID string) KafkaProcessor[MessageType] {
+func New[MessageType any](topicName string, cfg config.KPConfig) KafkaProcessor[MessageType] {
 	return (&kp[MessageType]{
-		applicationName:  consumerGroupID,
+		config:           config.KPConfig{KafkaConfig: cfg.KafkaConfig.WithDefaults(), SchemaRegistryConfig: cfg.SchemaRegistryConfig},
 		chain:            middleware.New[*kafka.Message, error](),
 		retry:            func(message *kafka.Message) {},
 		sendToDeadLetter: func(message *kafka.Message) {},

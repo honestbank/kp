@@ -13,3 +13,9 @@ jobs:
       - run: git config user.name github-actions
       - run: git config user.email github-actions@github.com
       - run: cd docs && npm ci && npm run deploy
+      - uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: docs/build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

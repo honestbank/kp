@@ -42,6 +42,7 @@ func New(topics []string, consumerGroup string) (Consumer, error) {
 	}
 	kafkaConfig := config.GetKafkaConsumerConfig(*cfg)
 	_ = kafkaConfig.SetKey("group.id", consumerGroup)
+	_ = kafkaConfig.SetKey("enable.auto.commit", false)
 	k, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
 		return nil, err

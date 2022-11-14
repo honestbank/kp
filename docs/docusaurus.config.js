@@ -10,6 +10,7 @@ const config = {
   tagline: 'Processing Kafka messages in golang made easy',
   url: 'https://honestbank.github.io',
   baseUrl: '/kp',
+  trailingSlash: true,
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.ico',

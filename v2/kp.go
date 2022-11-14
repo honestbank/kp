@@ -38,6 +38,14 @@ func (t *kp[MessageType]) WithDeadletterOrPanic(deadletterTopic string) KafkaPro
 	return processor
 }
 
+func (t *kp[MessageType]) init() KafkaProcessor[MessageType] {
+	t.retry = func(message *kafka.Message) {
+		t.sendToDeadLetter(message)
+	}
+
+	return t
+}
+
 func (t *kp[MessageType]) WithRetry(retryTopic string, retryCount int) (KafkaProcessor[MessageType], error) {
 	t.topics = append(t.topics, retryTopic)
 	p, err := producer.New[MessageType](retryTopic)
@@ -124,12 +132,12 @@ func (t *kp[MessageType]) Run(processor func(ctx context.Context, message Messag
 }
 
 func New[MessageType any](topicName string, applicationName string) KafkaProcessor[MessageType] {
-	return &kp[MessageType]{
+	return (&kp[MessageType]{
 		applicationName:  applicationName,
 		chain:            middleware.New[*kafka.Message, error](),
 		retry:            func(message *kafka.Message) {},
 		sendToDeadLetter: func(message *kafka.Message) {},
 		topics:           []string{topicName},
 		shouldContinue:   true,
-	}
+	}).init()
 }

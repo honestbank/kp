@@ -3,7 +3,7 @@ package consumer
 import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"github.com/honestbank/kp/v2/internal/config"
+	"github.com/honestbank/kp/v2/config"
 )
 
 type consumer struct {
@@ -35,13 +35,8 @@ func (c consumer) Commit(message *kafka.Message) error {
 	return err
 }
 
-func New(topics []string, consumerGroup string) (Consumer, error) {
-	cfg, err := config.LoadConfig[config.KafkaConfig]()
-	if err != nil {
-		return nil, err
-	}
-	kafkaConfig := config.GetKafkaConsumerConfig(*cfg)
-	_ = kafkaConfig.SetKey("group.id", consumerGroup)
+func New(topics []string, cfg config.Kafka) (Consumer, error) {
+	kafkaConfig := config.GetKafkaConsumerConfig(cfg)
 	_ = kafkaConfig.SetKey("enable.auto.commit", false)
 	k, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {

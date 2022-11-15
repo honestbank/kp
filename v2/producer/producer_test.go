@@ -5,8 +5,9 @@ package producer_test
 import (
 	"context"
 	"encoding/binary"
-	"os"
 	"testing"
+
+	"github.com/honestbank/kp/v2/config"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
@@ -29,11 +30,13 @@ type MyMessageBreaking struct {
 }
 
 func TestNewProducer(t *testing.T) {
-	t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
+	cfg := config.KPConfig{
+		KafkaConfig:          config.Kafka{BootstrapServers: "localhost"}.WithDefaults(),
+		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"},
+	}
 	t.Run("schema registry", func(t *testing.T) {
 		t.Run("when a producer is initialized, schema is automatically registered", func(t *testing.T) {
-			_, err := producer.New[MyMessage]("test-topic-3")
+			_, err := producer.New[MyMessage]("test-topic-3", cfg)
 			assert.NoError(t, err)
 			client, err := schemaregistry.NewClient(schemaregistry.NewConfigWithAuthentication(
 				"http://localhost:8081",
@@ -46,24 +49,27 @@ func TestNewProducer(t *testing.T) {
 			assert.Equal(t, "test-topic-3-value", res.Subject)
 		})
 		t.Run("fails initializing producer if there's a breaking change in schema", func(t *testing.T) {
-			_, err := producer.New[MyMessage]("test-topic-1")
-			_, err = producer.New[MyMessageBreaking]("test-topic-1")
+			_, err := producer.New[MyMessage]("test-topic-1", cfg)
+			_, err = producer.New[MyMessageBreaking]("test-topic-1", cfg)
 			assert.Error(t, err)
 		})
 		t.Run("non breaking change allows initialization", func(t *testing.T) {
-			_, err := producer.New[MyMessage]("test-topic-2")
-			_, err = producer.New[MyMessage]("test-topic-2")
+			_, err := producer.New[MyMessage]("test-topic-2", cfg)
+			_, err = producer.New[MyMessage]("test-topic-2", cfg)
 			assert.NoError(t, err)
 		})
 	})
 }
 
 func TestNew(t *testing.T) {
-	t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+	cfg := config.KPConfig{
+		KafkaConfig:          config.Kafka{BootstrapServers: "localhost"}.WithDefaults(),
+		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"},
+	}
 	t.Run("produce through confluent", func(t *testing.T) {
 		confluentProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
 		assert.NoError(t, err)
-		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
+		client, err := schemaregistry.NewClient(schemaregistry.NewConfig("http://localhost:8081"))
 		assert.NoError(t, err)
 		ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 		assert.NoError(t, err)
@@ -93,9 +99,7 @@ func TestNew(t *testing.T) {
 		}
 	})
 	t.Run("produce through kp", func(t *testing.T) {
-		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-		t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
-		kp, err := producer.New[BenchmarkMessage]("topic-kp")
+		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
 		assert.NoError(t, err)
 		defer kp.Flush()
 

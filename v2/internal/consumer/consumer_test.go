@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/internal/consumer"
 	"github.com/honestbank/kp/v2/producer"
 )
@@ -18,12 +20,17 @@ type MyMsg struct {
 }
 
 func TestNew(t *testing.T) {
-	t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "localhost")
+	setup()
+	kafkaConfig := config.Kafka{
+		BootstrapServers:  "localhost",
+		ConsumerGroupName: "consumer-group-1",
+	}
+	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8081"}
+	kpConfig := config.KPConfig{KafkaConfig: kafkaConfig, SchemaRegistryConfig: schemaRegistryConfig}
 	t.Run("can read from kafka", func(t *testing.T) {
-		c, err := consumer.New([]string{"consumer-integration-topic-1"}, "consumer-group-1")
+		c, err := consumer.New([]string{"consumer-integration-topic-1"}, kafkaConfig.WithDefaults())
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg]("consumer-integration-topic-1")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-1", kpConfig)
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
@@ -50,11 +57,13 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, 3, numberOfMessage)
 	})
 	t.Run("can read from multiple topics", func(t *testing.T) {
-		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, "consumer-group-2")
+		cfg := kafkaConfig.WithDefaults()
+		cfg.ConsumerGroupName = "int-test-1"
+		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, cfg)
 		assert.NoError(t, err)
-		p1, err := producer.New[MyMsg]("consumer-integration-topic-2")
+		p1, err := producer.New[MyMsg]("consumer-integration-topic-2", kpConfig)
 		assert.NoError(t, err)
-		p2, err := producer.New[MyMsg]("consumer-integration-topic-3")
+		p2, err := producer.New[MyMsg]("consumer-integration-topic-3", kpConfig)
 		assert.NoError(t, err)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
@@ -80,15 +89,30 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, 3, numberOfMessage)
 	})
 	t.Run("returns error if config is invalid", func(t *testing.T) {
-		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "")
-		t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "")
-		c, err := consumer.New([]string{}, "")
+		c, err := consumer.New([]string{}, kafkaConfig.WithDefaults())
 		assert.Error(t, err)
 		assert.Nil(t, c)
 	})
 	t.Run("returns error if there's no topic", func(t *testing.T) {
-		c, err := consumer.New([]string{}, "")
+		c, err := consumer.New([]string{}, kafkaConfig.WithDefaults())
 		assert.Error(t, err)
 		assert.Nil(t, c)
 	})
+}
+func setup() {
+	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}}
+	c, err := kafka.NewAdminClient(config.GetKafkaConfig(cfg.KafkaConfig))
+	if err != nil {
+		panic(err)
+	}
+	_, err = c.CreateTopics(context.Background(),
+		[]kafka.TopicSpecification{
+			{Topic: "consumer-integration-topic-2", ReplicationFactor: 1, NumPartitions: 1},
+			{Topic: "consumer-integration-topic-3", ReplicationFactor: 1, NumPartitions: 1},
+			{Topic: "user-logged-in-rewards-processor-dlt", ReplicationFactor: 1, NumPartitions: 1},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 }

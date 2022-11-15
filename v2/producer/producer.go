@@ -5,7 +5,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"github.com/honestbank/kp/v2/internal/config"
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/internal/schemaregistry"
 	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/internal/tracing"
@@ -51,17 +51,13 @@ func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
 	return p.k.Produce(message, nil)
 }
 
-func New[MessageType any](topic string) (Producer[MessageType], error) {
-	cfg, err := config.LoadConfig[config.KafkaConfig]()
-	if err != nil {
-		return nil, err
-	}
-	schemaID, err := schemaregistry.Publish[MessageType](topic)
+func New[MessageType any](topic string, cfg config.KPConfig) (Producer[MessageType], error) {
+	schemaID, err := schemaregistry.Publish[MessageType](topic, cfg.SchemaRegistryConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	k, err := kafka.NewProducer(config.GetKafkaConfig(*cfg))
+	k, err := kafka.NewProducer(config.GetKafkaConfig(cfg.KafkaConfig))
 
 	return producer[MessageType]{
 		k:        k,

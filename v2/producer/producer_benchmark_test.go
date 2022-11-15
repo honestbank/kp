@@ -4,8 +4,9 @@ package producer_test
 
 import (
 	"context"
-	"os"
 	"testing"
+
+	"github.com/honestbank/kp/v2/config"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
@@ -22,16 +23,18 @@ type BenchmarkMessage struct {
 }
 
 func BenchmarkProducer(b *testing.B) {
-	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
-	defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
+	cfg := config.KPConfig{
+		KafkaConfig:          config.Kafka{BootstrapServers: "localhost"},
+		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"},
+	}
 
-	kp, err := producer.New[BenchmarkMessage]("topic-kp")
+	kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
 	assert.NoError(b, err)
 	defer kp.Flush()
 
 	confluentProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
 	assert.NoError(b, err)
-	client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
+	client, err := schemaregistry.NewClient(schemaregistry.NewConfig("http://localhost:8081"))
 	assert.NoError(b, err)
 	ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 	assert.NoError(b, err)

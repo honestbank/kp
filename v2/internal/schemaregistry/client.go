@@ -6,14 +6,10 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
 	"github.com/heetch/avro"
 
-	"github.com/honestbank/kp/v2/internal/config"
+	"github.com/honestbank/kp/v2/config"
 )
 
-func getClient() (schemaregistry.Client, error) {
-	cfg, err := config.LoadConfig[Config]()
-	if err != nil {
-		return nil, err
-	}
+func getClient(cfg config.SchemaRegistry) (schemaregistry.Client, error) {
 	client, err := schemaregistry.NewClient(schemaregistry.NewConfigWithAuthentication(
 		cfg.Endpoint,
 		cfg.Username,
@@ -26,8 +22,8 @@ func getClient() (schemaregistry.Client, error) {
 	return client, nil
 }
 
-func Publish[MessageType any](topicName string) (*int, error) {
-	client, err := getClient()
+func Publish[MessageType any](topicName string, cfg config.SchemaRegistry) (*int, error) {
+	client, err := getClient(cfg)
 	if err != nil {
 		return nil, err
 	}

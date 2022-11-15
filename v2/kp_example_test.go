@@ -22,7 +22,7 @@ type UserLoggedInEvent struct {
 func ExampleNew() {
 	setup()
 
-	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "integration-tests"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
+	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "example-tests"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
 	go func() {
 		time.Sleep(time.Second * 10)
 		processor.Stop()

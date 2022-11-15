@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/honestbank/kp/v2/config"
-
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/internal/consumer"
 	"github.com/honestbank/kp/v2/producer"
 )
@@ -20,6 +20,7 @@ type MyMsg struct {
 }
 
 func TestNew(t *testing.T) {
+	setup()
 	kafkaConfig := config.Kafka{
 		BootstrapServers:  "localhost",
 		ConsumerGroupName: "consumer-group-1",
@@ -56,7 +57,9 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, 3, numberOfMessage)
 	})
 	t.Run("can read from multiple topics", func(t *testing.T) {
-		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, kafkaConfig.WithDefaults())
+		cfg := kafkaConfig.WithDefaults()
+		cfg.ConsumerGroupName = "int-test-1"
+		c, err := consumer.New([]string{"consumer-integration-topic-2", "consumer-integration-topic-3"}, cfg)
 		assert.NoError(t, err)
 		p1, err := producer.New[MyMsg]("consumer-integration-topic-2", kpConfig)
 		assert.NoError(t, err)
@@ -86,8 +89,6 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, 3, numberOfMessage)
 	})
 	t.Run("returns error if config is invalid", func(t *testing.T) {
-		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "")
-		t.Setenv("KP_KAFKA_BOOTSTRAP_SERVERS", "")
 		c, err := consumer.New([]string{}, kafkaConfig.WithDefaults())
 		assert.Error(t, err)
 		assert.Nil(t, c)
@@ -97,4 +98,21 @@ func TestNew(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, c)
 	})
+}
+func setup() {
+	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}}
+	c, err := kafka.NewAdminClient(config.GetKafkaConfig(cfg.KafkaConfig))
+	if err != nil {
+		panic(err)
+	}
+	_, err = c.CreateTopics(context.Background(),
+		[]kafka.TopicSpecification{
+			{Topic: "consumer-integration-topic-2", ReplicationFactor: 1, NumPartitions: 1},
+			{Topic: "consumer-integration-topic-3", ReplicationFactor: 1, NumPartitions: 1},
+			{Topic: "user-logged-in-rewards-processor-dlt", ReplicationFactor: 1, NumPartitions: 1},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 }

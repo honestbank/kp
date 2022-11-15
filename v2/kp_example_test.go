@@ -21,17 +21,20 @@ type UserLoggedInEvent struct {
 func ExampleNew() {
 	setup()
 
-	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
+	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "integration-tests"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
 	go func() {
 		time.Sleep(time.Second * 10)
 		processor.Stop()
 	}()
-	processor.WithRetryOrPanic("user-logged-in-rewards-processor-retry", 3).
+	err := processor.WithRetryOrPanic("user-logged-in-rewards-processor-retry", 3).
 		WithDeadletterOrPanic("user-logged-in-rewards-processor-dlt").
 		Run(func(ctx context.Context, ev UserLoggedInEvent) error {
 			fmt.Printf("%s|", ev.UserID)
 			return errors.New("some error")
 		})
+	if err != nil {
+		panic(err)
+	}
 	// Output: 1|1|1|1|
 }
 
@@ -51,6 +54,12 @@ func setup() {
 	}
 	now := time.Now().Format(time.RFC3339Nano)
 	event := UserLoggedInEvent{UserID: "1", Timestamp: now}
-	p.Produce(context.Background(), event)
-	p.Flush()
+	err = p.Produce(context.Background(), event)
+	if err != nil {
+		panic(err)
+	}
+	err = p.Flush()
+	if err != nil {
+		panic(err)
+	}
 }

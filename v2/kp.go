@@ -101,7 +101,7 @@ func (t *kp[MessageType]) Stop() {
 }
 
 func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
-	c, err := consumer.New(t.topics, t.config.KafkaConfig)
+	c, err := consumer.New(t.topics, t.config.KafkaConfig.WithDefaults())
 	if err != nil {
 		return err
 	}

@@ -59,13 +59,14 @@ func GetKafkaConfig(kafkaConfig Kafka) *kafka.ConfigMap {
 
 func GetKafkaConsumerConfig(config Kafka) *kafka.ConfigMap {
 	cfg := GetKafkaConfig(config)
+	hydrateIfNotNil(cfg, "group.id", &config.ConsumerGroupName)
 	hydrateIfNotNil(cfg, "auto.offset.reset", config.ConsumerAutoOffsetReset)
-	_ = cfg.SetKey("session.timeout.ms", config.ConsumerSessionTimeoutMs)
+	hydrateIfNotNil(cfg, "session.timeout.ms", config.ConsumerSessionTimeoutMs)
 
 	return cfg
 }
 
-func hydrateIfNotNil(cfg *kafka.ConfigMap, key string, value *string) {
+func hydrateIfNotNil[T any](cfg *kafka.ConfigMap, key string, value *T) {
 	if value == nil {
 		return
 	}

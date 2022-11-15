@@ -23,7 +23,12 @@ type kp[MessageType any] struct {
 	retry            func(message *kafka.Message)
 	sendToDeadLetter func(message *kafka.Message)
 	cleanupCallbacks []func()
+	kafkaErrorCb     func(err error)
 	shouldContinue   bool
+}
+
+func (t *kp[MessageType]) OnKafkaErrors(cb func(err error)) {
+	t.kafkaErrorCb = cb
 }
 
 func (t *kp[MessageType]) WithRetryOrPanic(retryTopic string, retryCount int) KafkaProcessor[MessageType] {
@@ -120,13 +125,18 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 		}
 		ctx := context.Background()
 		err = t.chain.Process(ctx, msg)
+		// need to commit here.
 		if err != nil {
-			t.retry(msg)
+			t.retry(&kafka.Message{Value: msg.Value, Key: msg.Key, Headers: msg.Headers, Timestamp: msg.Timestamp, TimestampType: msg.TimestampType, Opaque: msg.Opaque})
 		}
 		// retry and immediately commit
 		// what if, someone panics HERE
 		// panic("...")
-		_ = c.Commit(msg) // todo: remove auto commit as well
+		err = c.Commit(msg)
+		if err != nil {
+			t.kafkaErrorCb(err)
+		}
+		// what do we do with this error?
 	}
 	for _, callback := range t.cleanupCallbacks {
 		callback()
@@ -143,5 +153,6 @@ func New[MessageType any](topicName string, cfg config.KPConfig) KafkaProcessor[
 		sendToDeadLetter: func(message *kafka.Message) {},
 		topics:           []string{topicName},
 		shouldContinue:   true,
+		kafkaErrorCb:     func(err error) {},
 	}).init()
 }

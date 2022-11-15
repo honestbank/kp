@@ -12,6 +12,7 @@ type KafkaProcessor[MessageType any] interface {
 	WithRetryOrPanic(retryTopic string, retryCount int) KafkaProcessor[MessageType]
 	WithDeadletter(deadLetterTopic string) (KafkaProcessor[MessageType], error)
 	WithDeadletterOrPanic(deadletterTopic string) KafkaProcessor[MessageType]
+	OnKafkaErrors(cb func(err error))
 	Stop()
 	Run(processor Processor[MessageType]) error
 }

@@ -3,22 +3,27 @@ sidebar_position: 1
 ---
 
 # Getting Started with KP
-KP is a kafka message processing framework which makes retries, deadletters, tracing, measurements, etc easy.
+KP is a Kafka message processing framework which makes retries, deadletters, tracing, measurements, etc easy.
 
 It helps you write applications without worrying too much about the retries, deadlettering, backing off when things go wrong, etc. As a developer, simply focus on business logic and business logic only.
-Your business logic code will be free of retries, backoffs and maybe even tracing, but you'll still able to get all those for free.
+Your code will be free of retries, backoffs and even tracing, but you'll still able to get all those for free.
 
 It also comes with a opinionated producer which can produce typed messages into a given topic.
 
+:::tip
+Please check [this page](../introduction/concepts.md) for very brief concepts of Kafka.
+:::
+
+
 ### Installation {#installation}
-Adding kp as dependency on your project is as simple as running
+Adding KP as dependency on your project is as simple as running
 
 ```bash
 go get github.com/honestbank/kp/v2
 ```
 
 ### Requirements {#requirements}
-To use kp, you'll need the following:
+To use KP, you'll need the following:
 - go version 1.18 is needed because of the usage of generics
 - Schema registry to register schema of your topics (can't be disabled currently, maybe in future)
 - `cgo` needs to be enabled during build of your go code.
@@ -45,7 +50,7 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	p, err := producer.New[UserLoggedInEvent]("user-logged-in")
+	p, err := producer.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	if err != nil {
 		panic(err) // do better error handling
 	}
@@ -54,6 +59,10 @@ func main() {
 	if err != nil {
 		panic(err)
     }
+}
+
+func getConfig() any {
+    return nil // return your config
 }
 ```
 
@@ -77,7 +86,7 @@ type UserLoggedInEvent struct {
 
 func main() {
 	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling
@@ -89,6 +98,10 @@ func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) er
 	fmt.Printf("processing %v\n", message)
 	time.Sleep(time.Millisecond * 200) // simulate long running process
 	return nil // or error
+}
+
+func getConfig() any {
+    return nil // return your config
 }
 ```
 By default, the above doesn't have any additional capacity, it's as simple as using a simple consumer provided by confluent.

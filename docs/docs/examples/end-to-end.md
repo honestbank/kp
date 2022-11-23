@@ -3,10 +3,10 @@ sidebar_position: 2
 ---
 
 # End to end setup
-Setup with a http server that takes incoming message, produces message into kafka and processes messages multiple times with failure before passing at the end.
+Setup with a http server that takes incoming message, produces message into Kafka and processes messages multiple times with failure before passing at the end.
 
 ### Enable tracing across entire binary {#enable-tracing}
-While kp produces spans, it has no knowledge on where the spans need to be sent and in which format. We expect libary user to set that up.
+While KP produces spans, it has no knowledge on where the spans need to be sent and in which format. We expect libary user to set that up.
 
 In [this example](https://github.com/honestbank/kp/blob/c79601fc5a6ccb0543909fa34113a9e700098e2f/v2/examples/full/cmd/main.go#L32) we're setting up jaeger traces to send to tempo.
 

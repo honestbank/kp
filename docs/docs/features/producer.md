@@ -1,16 +1,16 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
 # Producer
-KP exposes a producer which can produce avro formatted messages ensuring backwards compatibility through schema registry.
+KP exposes a producer that can produce avro formatted messages, this ensures backwards compatibility through schema registry.
 
 :::tip
-Initializing producer also publishes the schema to schema registry, this allows you to fail the startup of your application If schema has a breaking change.
+Initializing a producer also publishes the schema to schema registry, this allows you to fail the startup of your application if the schema has a breaking change.
 :::
 
 ### Example {#example}
-The following example sends a message to a kafka topic.
+The following example sends a message to a Kafka topic if the type `UserLoggedIn` is backwards compatiable.
 
 :::tip
 Please check [this page](../introduction/configuration.md) for detailed configuration option
@@ -29,7 +29,7 @@ type UserLoggedIn struct {
 }
 
 func main() {
-	p, err := producer.New[UserLoggedIn]("topic-name")
+	p, err := producer.New[UserLoggedIn]("topic-name", getConfig())
 	defer p.Flush()
 	if err != nil {
 		panic(err)
@@ -38,5 +38,9 @@ func main() {
 	if err != nil {
 		panic(err)
     }
+}
+
+func getConfig() any {
+    return nil // return your config
 }
 ```

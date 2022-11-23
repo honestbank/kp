@@ -3,7 +3,7 @@ sidebar_position: 6
 ---
 
 # Write your own
-There could be cases that we've not covered in kp. In those scenarios you can write your own middleware. It's very easy.
+There could be cases that we've not covered in KP. In those scenarios you can write your own middleware. It's very easy.
 
 All Middlewares implement the interface `Middleware[*kafka.Message, error]`, so that's all we have to do.
 
@@ -86,8 +86,7 @@ type UserLoggedInEvent struct {
 
 func main() {
 	defer setupTracing()() // this is important and not included in kp by default
-	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
 	kp.AddMiddleware(middlewares.RetryCount())
 	kp.AddMiddleware(logmw.LogMiddleware())
@@ -104,4 +103,7 @@ func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) er
 	return nil                         // or error
 }
 
+func getConfig() any {
+	return nil // return your config
+}
 ```

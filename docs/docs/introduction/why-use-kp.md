@@ -36,7 +36,7 @@ func main() {
 	initializeTracer()
 	retryCount := 10
 	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.
 		WithRetryOrPanic("send-login-notification-retries", retryCount). // 1 line to enable retries
 		WithDeadletterOrPanic("send-login-notification-failures"). // 1 line to enable deadlettering
@@ -53,6 +53,10 @@ func main() {
     })
 }
 
+func getConfig() any {
+    return nil // return your config
+}
+
 func initializeTracer() {
 	// initialize your tracer
 }
@@ -60,5 +64,5 @@ func initializeTracer() {
 In the above example, we added retries, deadletters, backoffs, tracing and measurements all taking 1 line each.
 
 :::tip
-It is also possible to write your own middleware if kp doesn't cover usecase. And it's very simple to do so. Checkout writing middlewares page to learn how.
+It is also possible to write your own middleware if KP doesn't cover usecase. And it's very simple to do so. Checkout writing middlewares page to learn how.
 :::

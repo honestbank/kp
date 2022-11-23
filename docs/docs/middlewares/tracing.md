@@ -3,19 +3,19 @@ sidebar_position: 4
 ---
 
 # Tracing
-Chances are if you have kafka, you also want a distributed tracing. Because tracing is so common, we've included tracing middleware.
+Chances are if you have Kafka, you also want a distributed tracing. Because tracing is so common, we've included tracing middleware.
 
-We don't control where the traces go to or in which format, we simply create spans.
+Tracing middleware does not control where the traces go to or in which format, it simply creates spans.
 
 :::info
-If you use tracing middleware, you need to set up a trace provider yourself. That way you can send traces to any endpoint on any format. We produce spans using [opentelemetry](https://pkg.go.dev/go.opentelemetry.io/otel)
+While setting up tracing middleware, you will need a trace provider. That way you can send traces to any endpoint on any format. We produce spans using [opentelemetry](https://pkg.go.dev/go.opentelemetry.io/otel)
 :::
 
 ## Sample trace {#screenshot}
 In the following a message failed to be processed 6 times and it successfully processed the message the 7th time.
 ![tracing screenshot](../../static/img/tracing_example.png)
 
-### Configuration {#configuration}
+### Example {#example}
 
 First, you'll need a trace provider only then start the processor with the tracing middleware
 
@@ -40,9 +40,8 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	defer setupTracing()() // this is important and not included in kp
-	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	defer setupTracing()() // this is important and not included in KP
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
 	kp.AddMiddleware(middlewares.Tracing()) // This adds tracing middleware
 	err := kp.Process(processUserLoggedInEvent)
@@ -74,5 +73,9 @@ func setupTracing() func() {
 		exporter.Shutdown(context.Background())
 		tp.Shutdown(context.Background())
 	}
+}
+
+func getConfig() any {
+	return nil // return your config
 }
 ```

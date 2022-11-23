@@ -46,3 +46,9 @@
   height: 64px;
   filter: invert(var(--hero-logo-invert));
 }
+
+@media screen and (max-width: 996px) {
+  .hero__title img {
+    display: none;
+  }
+}

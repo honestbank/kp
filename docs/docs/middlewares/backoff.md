@@ -2,15 +2,17 @@
 sidebar_position: 2
 ---
 # Backoff
-When the worker starts receiving failures, ideally, it should slow down and let the underlying services recover. Doing this is as simple as adding 1 middleware like in the following example:
+When the worker starts receiving failures, ideally, it should slow down the message processing and let the underlying services recover. Doing this is as simple as adding 1 middleware like in the following example:
 
 :::tip
 You don't have to use the exponential backoff as shown in the example, you can bring your own policy as well.
 :::
 
-### Configuration {#configuration}
+### Example {#example}
 
-Take the processor and make a simple function call to add backoff like the following:
+:::warning
+Adding multiple backoff middleware is possible.
+:::
 
 ```go
 package main
@@ -31,8 +33,7 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10) // + this line adds 10 retries
 	exponent, duration, maxBackoffCount := 1.5, time.Millisecond*200, 10
 	backoffPolicy := backoff_policy.NewBackoff(policies.GetExponentialPolicy(exponent, duration, maxBackoffCount))
@@ -48,5 +49,9 @@ func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) er
 	fmt.Printf("processing %v\n", message)
 	time.Sleep(time.Millisecond * 200) // simulate long running process
 	return nil // or error
+}
+
+func getConfig() any {
+	return nil // return your config
 }
 ```

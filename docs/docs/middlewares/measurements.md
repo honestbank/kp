@@ -8,7 +8,7 @@ Every service needs some kind of measurements. KP comes with a prometheus push m
 Measurement middleware should come after backoff middleware so that we don't measure wait times (but you can).
 :::
 
-### Configuration {#configuration}
+### Example {#example}
 
 Take the processor and make a simple function call to add retries like the following:
 
@@ -32,7 +32,7 @@ type UserLoggedInEvent struct {
 
 func main() {
 	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
 	kp.WithDeadletterOrPanic("send-login-notification-failures")
 	kp.AddMiddleware(middlewares.Measure("http://path/to/push/gateway", applicationName)) // simply add a measurement middleware to get free metrics
@@ -47,5 +47,9 @@ func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) er
 	fmt.Printf("processing %v\n", message)
 	time.Sleep(time.Millisecond * 200) // simulate long running process
 	return nil // or error
+}
+
+func getConfig() any {
+	return nil // return your config
 }
 ```

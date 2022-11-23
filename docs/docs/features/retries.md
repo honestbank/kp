@@ -1,20 +1,20 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # Retries
-When there's an error while processing a message, most of the time we want to try again.
-But we might not want to try at the same time causing the consumer to lag.
 Retry feature sends failed messages into a retry topic and processes it when it receives the message.
 
+We send the message to the worker's retry topic to avoid delays in retries causing the consumer to lag.
+
 :::warning
-Before you start the `Run` method of kp, retry topic must exist in kafka.
-Failing to do so will produce the message to the retry topic, but it won't be attempted till next start of kp.
+Before you execute the `Run` method of KP, the retry topic must exist in Kafka.
+Failing to do so will produce the message to the retry topic, but it won't be attempted till next start of KP.
 :::
 
-### Configuration {#configuration}
+### Example {#example}
 
-Take the processor and make a simple function call to add retries like the following:
+Take the worker and make a simple function call to add retries like the following:
 
 ```go
 package main
@@ -33,13 +33,16 @@ type UserLoggedInEvent struct {
 
 func main() {
 	ensureTopicExists("send-login-notification-retries")
-	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", applicationName)
+	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10) // + this line adds 10 retries
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling
 	}
+}
+
+func getConfig() any {
+    return nil // return config
 }
 
 func ensureTopicExists(topic string) {
@@ -53,3 +56,5 @@ func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) er
 	return nil // or error
 }
 ```
+
+When a message exceeds the configured retry limit, it ignores the message by default. See [next page](./deadletters.md) to configure deadletters.

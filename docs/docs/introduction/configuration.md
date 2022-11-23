@@ -33,7 +33,7 @@ type SchemaRegistry struct {
 ```
 
 ## Kafka Configuration {#kafka-configuration}
-The following fields are used to configure kp
+The following fields are used to configure KP
 
 - `BootstrapServers` (required): URL to bootstrap servers eg: "localhost"
 - `SaslMechanism` (optional): Learn about SASL authentication [here](https://docs.confluent.io/platform/current/kafka/authentication_sasl/index.html) (default: `""`)

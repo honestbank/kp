@@ -11,7 +11,7 @@ Producing a custom message without serialization
 Please check [this page](../introduction/configuration.md) for detailed configuration option
 :::
 
-The following example sends a message to a kafka topic. This gives you full ability to fully customize the way you want to produce a message.
+The following example sends a message to a Kafka topic. This gives you full ability to fully customize the way you want to produce a message.
 
 ```go
 package main
@@ -26,7 +26,7 @@ type UserLoggedIn struct {
 }
 
 func main() {
-	p, err := producer.New[UserLoggedIn]("topic-name")
+	p, err := producer.New[UserLoggedIn]("topic-name", getConfig())
 	defer p.Flush()
 	if err != nil {
 		panic(err)
@@ -35,5 +35,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func getConfig() any {
+	return nil // return your config
 }
 ```

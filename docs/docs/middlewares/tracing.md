@@ -3,21 +3,21 @@ sidebar_position: 4
 ---
 
 # Tracing
-Chances are if you have Kafka, you also want a distributed tracing. Because tracing is so common, we've included tracing middleware.
+Chances are if you're using Kafka, you'll need distributed tracing. KP comes with a tracing middleware.
 
-Tracing middleware does not control where the traces go to or in which format, it simply creates spans.
+Tracing middleware does not control the format or the destination, it simply creates spans. Setting the destination and format is done by setting a trace provider.
 
-:::info
-While setting up tracing middleware, you will need a trace provider. That way you can send traces to any endpoint on any format. We produce spans using [opentelemetry](https://pkg.go.dev/go.opentelemetry.io/otel)
+:::warning
+Using trace middleware without a correctly configured trace provider will result in invalid spans being produced.
 :::
 
 ## Sample trace {#screenshot}
-In the following a message failed to be processed 6 times and it successfully processed the message the 7th time.
+In the following picture, a message failed to be processed 6 times and was successfully processed the 7th time.
 ![tracing screenshot](../../static/img/tracing_example.png)
 
 ### Example {#example}
 
-First, you'll need a trace provider only then start the processor with the tracing middleware
+Configure trace provider and add `middlewares.Tracing` to enable traces.
 
 ```go
 package main

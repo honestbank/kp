@@ -5,7 +5,7 @@ sidebar_position: 6
 # Write your own
 There could be cases that we've not covered in KP. In those scenarios you can write your own middleware. It's very easy.
 
-All Middlewares implement the interface `Middleware[*kafka.Message, error]`, so that's all we have to do.
+All Middlewares implement the `Middleware[*kafka.Message, error]` interface, so that's all we have to do.
 
 Definition of Middleware can be found [here](https://github.com/honestbank/kp/blob/52ed4f94b682835508513368314962f55d59fd1b/v2/internal/middleware/middleware.go#L19-L21)
 
@@ -37,7 +37,7 @@ type logMw struct {
 	Threshold int
 }
 
-func LogMiddleware(routingKey, alertName string, threshold int) middleware.Middleware[*kafka.Message, error] {
+func LogMiddleware(threshold int) middleware.Middleware[*kafka.Message, error] {
 	return logMw{
 		Threshold: threshold,
 	}
@@ -60,8 +60,7 @@ func (r logMw) logIfNeeded(count int) {
 ### Usage {#usage}
 
 :::warning
-Because we're using the RetryCountFromContext, we'll need to make sure that's setup before we add our middleware.
-Not doing that will cause the count being returned 0 for every try and log won't be printed.
+Because the `RetryCountFromContext` is being used, `middlewares.RetryCount` needs to be added before the `LogMiddleware`.
 :::
 
 ```go
@@ -69,15 +68,9 @@ package main
 
 import (
 	"context"
-	"os"
 
 	"github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/middlewares"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
 
 type UserLoggedInEvent struct {

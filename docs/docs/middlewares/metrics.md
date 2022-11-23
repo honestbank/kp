@@ -1,16 +1,16 @@
 ---
 sidebar_position: 3
 ---
-# Measurements
-Every service needs some kind of measurements. KP comes with a prometheus push metric middleware.
+# Metrics
+Every service should be able to notify of its performance/stability. KP comes with a prometheus push metrics middleware.
 
 :::warning
-Measurement middleware should come after backoff middleware so that we don't measure wait times (but you can).
+Measurement middleware should come after the backoff middleware so that we don't measure wait times (but you can).
 :::
 
 ### Example {#example}
 
-Take the processor and make a simple function call to add retries like the following:
+Simply add `middlewares.Measure` to enable metrics tracking.
 
 ```go
 package main

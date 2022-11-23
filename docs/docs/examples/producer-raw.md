@@ -26,12 +26,12 @@ type UserLoggedIn struct {
 }
 
 func main() {
-	p, err := producer.New[UserLoggedIn]("topic-name", getConfig())
+	p, err := producer.New[UserLoggedIn]("topic-name", getConfig()) // this will still publish and check against schema registry.
 	defer p.Flush()
 	if err != nil {
 		panic(err)
 	}
-	err = p.ProduceRaw(*kafka.Message{})
+	err = p.ProduceRaw(*kafka.Message{}) // producing raw will ignore the schema and won't be validated.
 	if err != nil {
 		panic(err)
 	}

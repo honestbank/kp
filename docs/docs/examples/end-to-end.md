@@ -3,7 +3,12 @@ sidebar_position: 2
 ---
 
 # End to end setup
-Setup with a http server that takes incoming message, produces message into Kafka and processes messages multiple times with failure before passing at the end.
+In this example, we're setting up an example project that:
+- has tracing enabled
+- exposes an endpoint to collect user data
+- creates and produces message into Kafka
+- processes messages 6 times while simulating a failure condition
+- simulates a succeeding condition at the end
 
 ### Enable tracing across entire binary {#enable-tracing}
 While KP produces spans, it has no knowledge on where the spans need to be sent and in which format. We expect libary user to set that up.
@@ -23,6 +28,6 @@ Producing a message is as simple as [calling `.Produce`](https://github.com/hone
 Configure worker with retries, deadletters and tracing [as shown](https://github.com/honestbank/kp/blob/c79601fc5a6ccb0543909fa34113a9e700098e2f/v2/examples/full/worker/worker.go#L21-L33)
 
 ## Execution {#execution}
-Simply enter into v2/examples/full directory and simply run `docker-compose up` or `docker compose up` and wait for `docker compose ps sleep` to indicate the container has exited (it'll take about 90 seconds)
+Simply enter into `v2/examples/full` directory and simply run `docker-compose up` or `docker compose up` and wait for `docker compose ps sleep` command to indicate the container has exited (it'll take about 90 seconds)
 
-Once `docker compose logs web --follow` indicates the server is listening, open the link in the browser and submit an email. Click on the link and refresh after a few seconds for traces to arrive.
+Once `docker compose logs web` command indicates the server is listening, open the link in the browser and submit an email. Click on the link and refresh after a few seconds for traces to arrive.

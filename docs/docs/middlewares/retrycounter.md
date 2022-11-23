@@ -3,9 +3,8 @@ sidebar_position: 5
 ---
 
 # Retry Count
-This is an informational middleware. It doesn't change the execution in any way.
-The purpose of this middleware is to provide an API to get the retry count from Kafka message.
-If we're seeing the message for the first time, it sets the value as 0.
+This is an informational middleware.
+The purpose of this middleware is to provide an API to get the current retry count for a message.
 
 :::info
 If you forget to add the middleware and tried to access the value, it's going to return `int(0)`
@@ -13,7 +12,7 @@ If you forget to add the middleware and tried to access the value, it's going to
 
 ### Example {#example}
 
-First, you'll need an instance with retry enabled. Then simply add the middleware anywhere in the chain.
+Simply add the `middlewares.RetryCount` before any other middlewares that depend on this information to be present.
 
 ```go
 package main

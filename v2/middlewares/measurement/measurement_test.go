@@ -1,6 +1,6 @@
 //go:build integration_test
 
-package middlewares_test
+package measurement_test
 
 import (
 	"context"
@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/honestbank/kp/v2/middlewares/measurement"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/honestbank/kp/v2/middlewares"
 )
 
 func TestMeasure(t *testing.T) {
 	t.Run("calls next", func(t *testing.T) {
 		called := false
-		middlewares.Measure("localhost:9091", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
+		measurement.NewMeasurementMiddleware("localhost:9091", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			called = true
 			time.Sleep(time.Millisecond * 550)
 			return nil
@@ -29,13 +29,13 @@ func TestMeasure(t *testing.T) {
 		assert.True(t, called)
 	})
 	t.Run("works if message errors", func(t *testing.T) {
-		middlewares.Measure("localhost:9091", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
+		measurement.NewMeasurementMiddleware("localhost:9091", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			return errors.New("some error")
 		})
 	})
 	t.Run("works even when push gateway url is not set", func(t *testing.T) {
 		called := false
-		middlewares.Measure("", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
+		measurement.NewMeasurementMiddleware("", "integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			called = true
 			time.Sleep(time.Millisecond * 550)
 			return errors.New("some random error")

@@ -1,4 +1,4 @@
-package middlewares
+package backoff
 
 import (
 	"context"
@@ -27,6 +27,6 @@ func (b backoff) Process(ctx context.Context, item *kafka.Message, next func(ctx
 	return err
 }
 
-func Backoff(policy backoff_policy.BackoffPolicy) middleware.Middleware[*kafka.Message, error] {
+func NewBackoffMiddleware(policy backoff_policy.BackoffPolicy) middleware.Middleware[*kafka.Message, error] {
 	return &backoff{p: policy}
 }

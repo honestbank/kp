@@ -1,4 +1,4 @@
-package middlewares
+package tracing
 
 import (
 	"context"
@@ -33,6 +33,6 @@ func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(c
 	return err
 }
 
-func Tracing() middleware.Middleware[*kafka.Message, error] {
+func NewTracingMiddleware() middleware.Middleware[*kafka.Message, error] {
 	return tracingMw{}
 }

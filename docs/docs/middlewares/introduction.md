@@ -22,7 +22,8 @@ import (
 	"time"
 
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/measurement"
+	"github.com/honestbank/kp/v2/middlewares/tracing"
 )
 
 type UserLoggedInEvent struct {
@@ -34,8 +35,8 @@ func main() {
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig()).
 		WithRetryOrPanic("send-login-notification-retries", retryCount).
 		WithDeadletterOrPanic("send-login-notification-failures")
-	kp.AddMiddleware(middlewares.Measure("", ""))
-	kp.AddMiddleware(middlewares.Tracing())
+	kp.AddMiddleware(measurement.NewMeasurementMiddleware("/path/to/push-gateway", "application-name"))
+	kp.AddMiddleware(tracing.NewTracingMiddleware())
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

@@ -15,7 +15,6 @@ Take the following example:
 Please check [this page](../introduction/configuration.md) for detailed configuration option
 :::
 
-
 ```go
 package main
 
@@ -25,7 +24,10 @@ import (
 
 	backoff_policy "github.com/honestbank/backoff-policy"
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/backoff"
+	"github.com/honestbank/kp/v2/middlewares/measurement"
+	"github.com/honestbank/kp/v2/middlewares/retry_count"
+	"github.com/honestbank/kp/v2/middlewares/tracing"
 )
 
 type UserLoggedInEvent struct {
@@ -40,21 +42,21 @@ func main() {
 	kp.
 		WithRetryOrPanic("send-login-notification-retries", retryCount). // 1 line to enable retries
 		WithDeadletterOrPanic("send-login-notification-failures"). // 1 line to enable deadlettering
-		AddMiddleware(middlewares.Backoff(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10))). // 1 line to enable backoffs
-		AddMiddleware(middlewares.Tracing()). // 1 line to enable tracing
-		AddMiddleware(middlewares.Measure("path/to/prometheus-push-gateway", applicationName)). // 1 line to enable measurements
-		AddMiddleware(middlewares.RetryCount())
+		AddMiddleware(backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10))). // 1 line to enable backoffs
+		AddMiddleware(tracing.NewTracingMiddleware()). // 1 line to enable tracing
+		AddMiddleware(measurement.NewMeasurementMiddleware("path/to/prometheus-push-gateway", applicationName)). // 1 line to enable measurements
+		AddMiddleware(retry_count.NewRetryCountMiddleware())
 	kp.Process(func(ctx context.Context, message UserLoggedInEvent) error {
 		// process the message and return error if it fails. don't worry about retries here.
 		// but if you need to know the current count use the following:
-		count := middlewares.RetryCountFromContext(ctx)
+		count := retry_count.FromContext(ctx)
 		print(count)
 		return nil
-    })
+	})
 }
 
 func getConfig() any {
-    return nil // return your config
+	return nil // return your config
 }
 
 func initializeTracer() {

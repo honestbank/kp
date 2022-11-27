@@ -25,7 +25,7 @@ import (
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/backoff-policy/policies"
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/backoff"
 )
 
 type UserLoggedInEvent struct {
@@ -37,7 +37,7 @@ func main() {
 	kp.WithRetryOrPanic("send-login-notification-retries", 10) // + this line adds 10 retries
 	exponent, duration, maxBackoffCount := 1.5, time.Millisecond*200, 10
 	backoffPolicy := backoff_policy.NewBackoff(policies.GetExponentialPolicy(exponent, duration, maxBackoffCount))
-	kp.AddMiddleware(middlewares.Backoff(backoffPolicy)) // simply add a backoff middleware to back off.
+	kp.AddMiddleware(backoff.NewBackoffMiddleware(backoffPolicy)) // simply add a backoff middleware to back off.
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/retry_count"
 )
 
 type UserLoggedInEvent struct {
@@ -32,7 +32,7 @@ type UserLoggedInEvent struct {
 func main() {
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
-	kp.AddMiddleware(middlewares.RetryCount()) // This adds retry count middleware
+	kp.AddMiddleware(retry_count.NewRetryCountMiddleware()) // This adds retry count middleware
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling
@@ -40,7 +40,7 @@ func main() {
 }
 
 func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
-	count := middlewares.RetryCountFromContext(ctx) // this is how to get the count
+	count := retry_count.FromContext(ctx) // this is how to get the count
 	fmt.Printf("this message for %s user was processed %d times", message.UserID, count)
 	return nil // or error
 }

@@ -60,7 +60,7 @@ func (r logMw) logIfNeeded(count int) {
 ### Usage {#usage}
 
 :::warning
-Because the `RetryCountFromContext` is being used, `middlewares.RetryCount` needs to be added before the `LogMiddleware`.
+Because the `retry_count.FromContext` is being used, `middlewares.NewRetryCountMiddleware` needs to be added before the `LogMiddleware`.
 :::
 
 ```go
@@ -70,7 +70,7 @@ import (
 	"context"
 
 	"github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/retry_count"
 )
 
 type UserLoggedInEvent struct {
@@ -81,7 +81,7 @@ func main() {
 	defer setupTracing()() // this is important and not included in kp by default
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
-	kp.AddMiddleware(middlewares.RetryCount())
+	kp.AddMiddleware(retry_count.NewRetryCountMiddleware())
 	kp.AddMiddleware(logmw.LogMiddleware())
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {

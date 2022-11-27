@@ -23,7 +23,7 @@ import (
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/backoff-policy/policies"
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/measurement"
 )
 
 type UserLoggedInEvent struct {
@@ -35,7 +35,7 @@ func main() {
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
 	kp.WithDeadletterOrPanic("send-login-notification-failures")
-	kp.AddMiddleware(middlewares.Measure("http://path/to/push/gateway", applicationName)) // simply add a measurement middleware to get free metrics
+	kp.AddMiddleware(measurement.NewMeasurementMiddleware("http://path/to/push/gateway", applicationName)) // simply add a measurement middleware to get free metrics
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

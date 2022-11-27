@@ -27,7 +27,7 @@ import (
 	"os"
 
 	"github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -43,7 +43,7 @@ func main() {
 	defer setupTracing()() // this is important and not included in KP
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
-	kp.AddMiddleware(middlewares.Tracing()) // This adds tracing middleware
+	kp.AddMiddleware(tracing.NewTracingMiddleware()) // This adds tracing middleware
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

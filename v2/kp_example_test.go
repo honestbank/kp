@@ -10,7 +10,7 @@ import (
 
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
-	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/retry_count"
 	"github.com/honestbank/kp/v2/producer"
 )
 
@@ -28,10 +28,10 @@ func ExampleNew() {
 		processor.Stop()
 	}()
 	err := processor.WithRetryOrPanic("user-logged-in-rewards-processor-retry", 3).
-		AddMiddleware(middlewares.RetryCount()).
+		AddMiddleware(retry_count.NewRetryCountMiddleware()).
 		WithDeadletterOrPanic("user-logged-in-rewards-processor-dlt").
 		Run(func(ctx context.Context, ev UserLoggedInEvent) error {
-			fmt.Printf("%s-%d|", ev.UserID, middlewares.RetryCountFromContext(ctx))
+			fmt.Printf("%s-%d|", ev.UserID, retry_count.FromContext(ctx))
 			return errors.New("some error")
 		})
 	if err != nil {

@@ -1,4 +1,4 @@
-package middlewares
+package measurement
 
 import (
 	"context"
@@ -46,7 +46,7 @@ func (m measurementMiddleware) Process(ctx context.Context, item *kafka.Message,
 	return err
 }
 
-func Measure(gatewayURL string, applicationName string) middleware.Middleware[*kafka.Message, error] {
+func NewMeasurementMiddleware(gatewayURL string, applicationName string) middleware.Middleware[*kafka.Message, error] {
 	pushClient := push.New(gatewayURL, applicationName).
 		Grouping("framework", "kp").
 		Collector(operationDuration)

@@ -1,8 +1,10 @@
-package middlewares_test
+package tracing_test
 
 import (
 	"context"
 	"testing"
+
+	"github.com/honestbank/kp/v2/middlewares/tracing"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/honestbank/kp/v2/internal/kafkaheaders"
-	"github.com/honestbank/kp/v2/middlewares"
 )
 
 func TestTracingMw_Process(t *testing.T) {
@@ -19,7 +20,7 @@ func TestTracingMw_Process(t *testing.T) {
 		tp := trace.NewTracerProvider()
 		otel.SetTracerProvider(tp)
 		message := &kafka.Message{Headers: []kafka.Header{}}
-		tracing := middlewares.Tracing()
+		tracing := tracing.NewTracingMiddleware()
 		tracing.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
 			return nil
 		})
@@ -29,7 +30,7 @@ func TestTracingMw_Process(t *testing.T) {
 	t.Run("if a message already has traceID, it should result in same traceID", func(t *testing.T) {
 		message := &kafka.Message{Headers: []kafka.Header{}}
 		kafkaheaders.Set(message, "traceparent", "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01")
-		tracing := middlewares.Tracing()
+		tracing := tracing.NewTracingMiddleware()
 		tracing.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
 			traceParent := *kafkaheaders.Get("traceparent", message2)
 			assert.Equal(t, "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01", traceParent)

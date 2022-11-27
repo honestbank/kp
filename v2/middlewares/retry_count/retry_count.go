@@ -1,4 +1,4 @@
-package middlewares
+package retry_count
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 type ctxKey struct{}
 
-func RetryCountFromContext(ctx context.Context) int {
+func FromContext(ctx context.Context) int {
 	val := ctx.Value(&ctxKey{})
 	if val == nil {
 		return 0
@@ -28,6 +28,6 @@ func (r retryCountMw) Process(ctx context.Context, item *kafka.Message, next fun
 	return next(context.WithValue(ctx, &ctxKey{}, retryCount), item)
 }
 
-func RetryCount() middleware.Middleware[*kafka.Message, error] {
+func NewRetryCountMiddleware() middleware.Middleware[*kafka.Message, error] {
 	return retryCountMw{}
 }

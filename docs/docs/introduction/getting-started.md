@@ -85,7 +85,6 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	applicationName := "send-login-notification-worker"
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {

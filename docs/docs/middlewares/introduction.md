@@ -24,6 +24,7 @@ import (
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/middlewares/measurement"
 	"github.com/honestbank/kp/v2/middlewares/tracing"
+	"go.opentelemetry.io/otel"
 )
 
 type UserLoggedInEvent struct {
@@ -36,7 +37,8 @@ func main() {
 		WithRetryOrPanic("send-login-notification-retries", retryCount).
 		WithDeadletterOrPanic("send-login-notification-failures")
 	kp.AddMiddleware(measurement.NewMeasurementMiddleware("/path/to/push-gateway", "application-name"))
-	kp.AddMiddleware(tracing.NewTracingMiddleware())
+	tp := otel.GetTracerProvider() // you'll need to set the tracer provider as well
+	kp.AddMiddleware(tracing.NewTracingMiddleware(tp))
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

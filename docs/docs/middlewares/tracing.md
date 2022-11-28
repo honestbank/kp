@@ -43,7 +43,7 @@ func main() {
 	defer setupTracing()() // this is important and not included in KP
 	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
 	kp.WithRetryOrPanic("send-login-notification-retries", 10)
-	kp.AddMiddleware(tracing.NewTracingMiddleware()) // This adds tracing middleware
+	kp.AddMiddleware(tracing.NewTracingMiddleware(otel.GetTracerProvider())) // This adds tracing middleware
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling
@@ -53,7 +53,7 @@ func main() {
 func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
 	// here, you can focus on your business logic.
 	fmt.Printf("processing %v\n", message)
-	time.Sleep(time.Millisecond * 200) // simulate long running process
+	time.Sleep(time.Millisecond * 200) // simulate long-running process
 	return nil                         // or error
 }
 

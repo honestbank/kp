@@ -18,8 +18,8 @@ func TestTracingMw_Process(t *testing.T) {
 		//// need to initialize trace provider
 		tp := trace.NewTracerProvider()
 		message := &kafka.Message{Headers: []kafka.Header{}}
-		tracingMw := tracing.NewTracingMiddleware(tp)
-		tracingMw.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
+		tracingMiddleware := tracing.NewTracingMiddleware(tp)
+		tracingMiddleware.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
 			return nil
 		})
 		assert.Greater(t, len(message.Headers), 0)
@@ -29,8 +29,8 @@ func TestTracingMw_Process(t *testing.T) {
 		tp := trace.NewTracerProvider()
 		message := &kafka.Message{Headers: []kafka.Header{}}
 		kafkaheaders.Set(message, "traceparent", "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01")
-		tracingMw := tracing.NewTracingMiddleware(tp)
-		tracingMw.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
+		tracingMiddleware := tracing.NewTracingMiddleware(tp)
+		tracingMiddleware.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
 			traceParent := *kafkaheaders.Get("traceparent", message2)
 			assert.Equal(t, "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01", traceParent)
 			return nil

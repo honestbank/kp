@@ -12,11 +12,11 @@ import (
 	"github.com/honestbank/kp/v2/internal/tracing"
 )
 
-type tracingMw struct {
+type tracingMiddleware struct {
 	tracerProvider *trace.TracerProvider
 }
 
-func (t *tracingMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
+func (t *tracingMiddleware) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
 	tracer := t.tracerProvider.Tracer("kp")
 	ctx, span := tracer.Start(tracing.ExtractTraceContext(ctx, item), "process")
 	err := next(ctx, item)
@@ -36,7 +36,7 @@ func (t *tracingMw) Process(ctx context.Context, item *kafka.Message, next func(
 }
 
 func NewTracingMiddleware(tracerProvider *trace.TracerProvider) middleware.Middleware[*kafka.Message, error] {
-	return &tracingMw{
+	return &tracingMiddleware{
 		tracerProvider: tracerProvider,
 	}
 }

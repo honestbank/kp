@@ -4,18 +4,20 @@ import (
 	"context"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/honestbank/kp/v2/internal/kafkaheaders"
 	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/internal/tracing"
 )
 
-type tracingMw struct{}
+type tracingMiddleware struct {
+	tracerProvider *trace.TracerProvider
+}
 
-func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
-	tracer := otel.GetTracerProvider().Tracer("kp")
+func (t *tracingMiddleware) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
+	tracer := t.tracerProvider.Tracer("kp")
 	ctx, span := tracer.Start(tracing.ExtractTraceContext(ctx, item), "process")
 	err := next(ctx, item)
 	if err != nil {
@@ -33,6 +35,8 @@ func (t tracingMw) Process(ctx context.Context, item *kafka.Message, next func(c
 	return err
 }
 
-func NewTracingMiddleware() middleware.Middleware[*kafka.Message, error] {
-	return tracingMw{}
+func NewTracingMiddleware(tracerProvider *trace.TracerProvider) middleware.Middleware[*kafka.Message, error] {
+	return &tracingMiddleware{
+		tracerProvider: tracerProvider,
+	}
 }

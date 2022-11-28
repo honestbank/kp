@@ -28,6 +28,7 @@ import (
 	"github.com/honestbank/kp/v2/middlewares/measurement"
 	"github.com/honestbank/kp/v2/middlewares/retry_count"
 	"github.com/honestbank/kp/v2/middlewares/tracing"
+	"go.opentelemetry.io/otel"
 )
 
 type UserLoggedInEvent struct {
@@ -43,7 +44,7 @@ func main() {
 		WithRetryOrPanic("send-login-notification-retries", retryCount). // 1 line to enable retries
 		WithDeadletterOrPanic("send-login-notification-failures"). // 1 line to enable deadlettering
 		AddMiddleware(backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10))). // 1 line to enable backoffs
-		AddMiddleware(tracing.NewTracingMiddleware()). // 1 line to enable tracing
+		AddMiddleware(tracing.NewTracingMiddleware(otel.GetTracerProvider())). // 1 line to enable tracing
 		AddMiddleware(measurement.NewMeasurementMiddleware("path/to/prometheus-push-gateway", applicationName)). // 1 line to enable measurements
 		AddMiddleware(retry_count.NewRetryCountMiddleware())
 	kp.Process(func(ctx context.Context, message UserLoggedInEvent) error {

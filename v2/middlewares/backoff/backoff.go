@@ -6,7 +6,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	backoff_policy "github.com/honestbank/backoff-policy"
-	"github.com/honestbank/kp/v2/internal/middleware"
+	"github.com/honestbank/kp/v2/middlewares"
 )
 
 type backoff struct {
@@ -27,6 +27,6 @@ func (b backoff) Process(ctx context.Context, item *kafka.Message, next func(ctx
 	return err
 }
 
-func NewBackoffMiddleware(policy backoff_policy.BackoffPolicy) middleware.Middleware[*kafka.Message, error] {
+func NewBackoffMiddleware(policy backoff_policy.BackoffPolicy) middlewares.KPMiddleware[*kafka.Message] {
 	return &backoff{p: policy}
 }

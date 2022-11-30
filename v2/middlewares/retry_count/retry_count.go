@@ -5,8 +5,8 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/internal/retrycounter"
+	"github.com/honestbank/kp/v2/middlewares"
 )
 
 type ctxKey struct{}
@@ -28,6 +28,6 @@ func (r retryCountMw) Process(ctx context.Context, item *kafka.Message, next fun
 	return next(context.WithValue(ctx, &ctxKey{}, retryCount), item)
 }
 
-func NewRetryCountMiddleware() middleware.Middleware[*kafka.Message, error] {
+func NewRetryCountMiddleware() middlewares.KPMiddleware[*kafka.Message] {
 	return retryCountMw{}
 }

@@ -10,7 +10,8 @@ All Middlewares implement the `Middleware[*kafka.Message, error]` interface, so 
 Definition of Middleware can be found [here](https://github.com/honestbank/kp/blob/52ed4f94b682835508513368314962f55d59fd1b/v2/internal/middleware/middleware.go#L19-L21)
 
 :::tip
-No need to worry about IN and OUT, simply write a `Middleware[*kafka.Message, error]` implementation.
+Simply write a `middlewares.KPMiddleware[T]` implementation.
+`T` is the type of message this middleware can handle (eg: *kafka.Message)
 :::
 
 ### Creating a log middleware {#implementation}
@@ -31,19 +32,20 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/middlewares"
+	"github.com/honestbank/kp/v2/middlewares/retry_count"
 )
 
 type logMw struct {
 	Threshold int
 }
 
-func LogMiddleware(threshold int) middleware.Middleware[*kafka.Message, error] {
+func LogMiddleware(threshold int) middlewares.KPMiddleware[*kafka.Message] {
 	return logMw{
 		Threshold: threshold,
 	}
 }
 func (r logMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
-	count := middlewares.RetryCountFromContext(ctx)
+	count := retry_count.FromContext(ctx)
 	r.logIfNeeded(count)
 	return next(ctx, item)
 }
@@ -60,7 +62,7 @@ func (r logMw) logIfNeeded(count int) {
 ### Usage {#usage}
 
 :::warning
-Because the `retry_count.FromContext` is being used, `middlewares.NewRetryCountMiddleware` needs to be added before the `LogMiddleware`.
+Because the `retry_count.FromContext` is being used, `retry_count.NewRetryCountMiddleware` needs to be added before the `LogMiddleware`.
 :::
 
 ```go

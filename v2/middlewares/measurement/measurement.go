@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 
-	"github.com/honestbank/kp/v2/internal/middleware"
+	"github.com/honestbank/kp/v2/middlewares"
 )
 
 var operationDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -46,7 +46,7 @@ func (m measurementMiddleware) Process(ctx context.Context, item *kafka.Message,
 	return err
 }
 
-func NewMeasurementMiddleware(gatewayURL string, applicationName string) middleware.Middleware[*kafka.Message, error] {
+func NewMeasurementMiddleware(gatewayURL string, applicationName string) middlewares.KPMiddleware[*kafka.Message] {
 	pushClient := push.New(gatewayURL, applicationName).
 		Grouping("framework", "kp").
 		Collector(operationDuration)

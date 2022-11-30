@@ -8,8 +8,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/honestbank/kp/v2/internal/kafkaheaders"
-	"github.com/honestbank/kp/v2/internal/middleware"
 	"github.com/honestbank/kp/v2/internal/tracing"
+	"github.com/honestbank/kp/v2/middlewares"
 )
 
 type tracingMiddleware struct {
@@ -35,7 +35,7 @@ func (t *tracingMiddleware) Process(ctx context.Context, item *kafka.Message, ne
 	return err
 }
 
-func NewTracingMiddleware(tracerProvider *trace.TracerProvider) middleware.Middleware[*kafka.Message, error] {
+func NewTracingMiddleware(tracerProvider *trace.TracerProvider) middlewares.KPMiddleware[*kafka.Message] {
 	return &tracingMiddleware{
 		tracerProvider: tracerProvider,
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/kafkaheaders"
+	"github.com/honestbank/kp/v2/kafkaheaders"
 )
 
 func TestGet(t *testing.T) {

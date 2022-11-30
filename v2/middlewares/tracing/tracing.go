@@ -7,8 +7,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/sdk/trace"
 
-	"github.com/honestbank/kp/v2/internal/kafkaheaders"
 	"github.com/honestbank/kp/v2/internal/tracing"
+	"github.com/honestbank/kp/v2/kafkaheaders"
 	"github.com/honestbank/kp/v2/middlewares"
 )
 

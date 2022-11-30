@@ -3,9 +3,9 @@ package retrycounter
 import (
 	"strconv"
 
-	"github.com/honestbank/kp/v2/internal/kafkaheaders"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+
+	"github.com/honestbank/kp/v2/kafkaheaders"
 )
 
 const retryCountHeader = "x-retry-count"

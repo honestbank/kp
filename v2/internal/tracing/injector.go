@@ -6,7 +6,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.opentelemetry.io/otel/propagation"
 
-	"github.com/honestbank/kp/v2/internal/kafkaheaders"
+	"github.com/honestbank/kp/v2/kafkaheaders"
 )
 
 func InjectTraceHeaders(context context.Context, message *kafka.Message) {

@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/honestbank/kp/v2/kafkaheaders"
 	"github.com/honestbank/kp/v2/middlewares/tracing"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/sdk/trace"
-
-	"github.com/honestbank/kp/v2/internal/kafkaheaders"
 )
 
 func TestTracingMw_Process(t *testing.T) {

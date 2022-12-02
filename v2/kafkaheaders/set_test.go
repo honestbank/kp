@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/honestbank/kp/v2/kafkaheaders"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/honestbank/kp/v2/kafkaheaders"
 )
 
 func TestSet(t *testing.T) {

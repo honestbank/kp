@@ -1,7 +1,7 @@
 package middlewares
 
-import "github.com/honestbank/kp/v2/internal/middleware"
+import "context"
 
 type KPMiddleware[T any] interface {
-	middleware.Middleware[T, error]
+	Process(ctx context.Context, item T, next func(ctx context.Context, item T) error) error
 }

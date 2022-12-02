@@ -12,6 +12,10 @@ import (
 
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
+	consumer2 "github.com/honestbank/kp/v2/internal/consumer"
+	"github.com/honestbank/kp/v2/middlewares/consumer"
+	"github.com/honestbank/kp/v2/middlewares/deadletter"
+	"github.com/honestbank/kp/v2/middlewares/retry"
 	"github.com/honestbank/kp/v2/producer"
 )
 
@@ -43,18 +47,31 @@ func TestKP(t *testing.T) {
 	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
 	p.Flush()
 	assert.NoError(t, err)
-	kp := v2.New[MyType]("kp-topic", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	kp := v2.New[kafka.Message]()
 	messageProcessCount := 0
 	const retryCount = 10
+	retryTopicProducer, err := producer.New[UserLoggedInEvent]("kp-topic-retry", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	if err != nil {
+		panic(err)
+	}
+	dltProducer, err := producer.New[UserLoggedInEvent]("kp-topic-dlt", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	if err != nil {
+		panic(err)
+	}
+	kafkaConsumer, err := consumer2.New([]string{"kp-topic", "kp-topic-retry"}, kafkaCfg.WithDefaults())
+	if err != nil {
+		panic(err)
+	}
+
 	go func() {
 		time.Sleep(time.Second * (retryCount / 2))
 		kp.Stop()
 	}()
-	err = kp.WithRetryOrPanic("kp-topic-retry", retryCount).
+	err = kp.AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(MyMw{}).
-		WithDeadletterOrPanic("kp-topic-dlt").
-		Run(func(ctx context.Context, message MyType) error {
-			time.Sleep(time.Millisecond * 200)
+		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
+		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, retryCount, func(err error) {})).
+		Run(func(ctx context.Context, message *kafka.Message) error {
 			fmt.Printf("%v\n", message)
 			messageProcessCount++
 

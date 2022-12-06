@@ -13,7 +13,7 @@ type kp[MessageType any] struct {
 	shouldContinue bool
 }
 
-func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) KafkaProcessor[MessageType] {
+func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType] {
 	t.chain.AddMiddleware(middleware)
 
 	return t
@@ -34,7 +34,7 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 	return nil
 }
 
-func New[MessageType any]() KafkaProcessor[MessageType] {
+func New[MessageType any]() MessageProcessor[MessageType] {
 	return &kp[MessageType]{
 		chain:          middleware.New[*MessageType, error](),
 		shouldContinue: true,

@@ -4,8 +4,8 @@ import (
 	"github.com/honestbank/kp/v2/internal/middleware"
 )
 
-type KafkaProcessor[MessageType any] interface {
-	AddMiddleware(middleware middleware.Middleware[*MessageType, error]) KafkaProcessor[MessageType]
+type MessageProcessor[MessageType any] interface {
+	AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType]
 	Stop()
 	Run(processor Processor[MessageType]) error
 }

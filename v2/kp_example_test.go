@@ -10,6 +10,11 @@ import (
 
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
+	consumer2 "github.com/honestbank/kp/v2/internal/consumer"
+	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/middlewares/consumer"
+	"github.com/honestbank/kp/v2/middlewares/deadletter"
+	"github.com/honestbank/kp/v2/middlewares/retry"
 	"github.com/honestbank/kp/v2/middlewares/retry_count"
 	"github.com/honestbank/kp/v2/producer"
 )
@@ -21,17 +26,41 @@ type UserLoggedInEvent struct {
 
 func ExampleNew() {
 	setup()
+	kpConfig := config.KPConfig{
+		KafkaConfig: config.Kafka{
+			BootstrapServers:  "localhost",
+			ConsumerGroupName: "example-tests",
+		},
+		SchemaRegistryConfig: config.SchemaRegistry{
+			Endpoint: "http://localhost:8081",
+		},
+	}
 
-	processor := v2.New[UserLoggedInEvent]("user-logged-in", config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "example-tests"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}})
+	retryTopicProducer, err := producer.New[UserLoggedInEvent]("user-logged-in-rewards-processor-retry", kpConfig)
+	if err != nil {
+		panic(err)
+	}
+	dltProducer, err := producer.New[UserLoggedInEvent]("user-logged-in-rewards-processor-dlt", kpConfig)
+	if err != nil {
+		panic(err)
+	}
+	processor := v2.New[kafka.Message]()
+	kafkaConsumer, err := consumer2.New([]string{"user-logged-in", "user-logged-in-rewards-processor-retry"}, kpConfig.KafkaConfig.WithDefaults())
+	if err != nil {
+		panic(err)
+	}
 	go func() {
 		time.Sleep(time.Second * 10)
 		processor.Stop()
 	}()
-	err := processor.WithRetryOrPanic("user-logged-in-rewards-processor-retry", 3).
+	err = processor.
+		AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(retry_count.NewRetryCountMiddleware()).
-		WithDeadletterOrPanic("user-logged-in-rewards-processor-dlt").
-		Run(func(ctx context.Context, ev UserLoggedInEvent) error {
-			fmt.Printf("%s-%d|", ev.UserID, retry_count.FromContext(ctx))
+		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
+		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, 3, func(err error) {})).
+		Run(func(ctx context.Context, ev *kafka.Message) error {
+			val, _ := serialization.Decode[UserLoggedInEvent](ev.Value)
+			fmt.Printf("%s-%d|", val.UserID, retry_count.FromContext(ctx))
 			return errors.New("some error")
 		})
 	if err != nil {

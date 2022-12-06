@@ -7,11 +7,11 @@ import (
 )
 
 type consumer struct {
-	c *kafka.Consumer
+	kakfaConsumer *kafka.Consumer
 }
 
 func (c consumer) GetMessage() *kafka.Message {
-	ev := c.c.Poll(100) // kafka's example uses 100ms and I'm going with it for now
+	ev := c.kakfaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
 	if ev == nil {
 		return nil
 	}
@@ -30,7 +30,7 @@ func getMessageOrNil(event kafka.Event) *kafka.Message {
 }
 
 func (c consumer) Commit(message *kafka.Message) error {
-	_, err := c.c.CommitMessage(message)
+	_, err := c.kakfaConsumer.CommitMessage(message)
 
 	return err
 }
@@ -47,5 +47,5 @@ func New(topics []string, cfg config.Kafka) (Consumer, error) {
 		return nil, err
 	}
 
-	return consumer{c: k}, nil
+	return consumer{kakfaConsumer: k}, nil
 }

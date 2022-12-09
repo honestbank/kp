@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honestbank/kp/v2/config"
-	"github.com/honestbank/kp/v2/internal/consumer"
+	"github.com/honestbank/kp/v2/consumer"
 	"github.com/honestbank/kp/v2/producer"
 )
 

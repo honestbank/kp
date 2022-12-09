@@ -10,7 +10,7 @@ import (
 
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
-	consumer2 "github.com/honestbank/kp/v2/internal/consumer"
+	consumer2 "github.com/honestbank/kp/v2/consumer"
 	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/middlewares/consumer"
 	"github.com/honestbank/kp/v2/middlewares/deadletter"

@@ -5,7 +5,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"github.com/honestbank/kp/v2/internal/consumer"
+	"github.com/honestbank/kp/v2/consumer"
 	"github.com/honestbank/kp/v2/middlewares"
 )
 

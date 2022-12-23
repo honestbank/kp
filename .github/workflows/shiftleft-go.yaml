@@ -1,0 +1,48 @@
+---
+# This workflow integrates ShiftLeft NG SAST with GitHub
+# Visit https://docs.shiftleft.io for help
+name: shiftleft-go
+
+on:
+  pull_request:
+    branches: [ main ]
+
+env:
+  GOPRIVATE: github.com/honestbank
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  shiftleft-go:
+    name: shiftleft-go
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ "1.18" ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Configure ssh-key for private modules
+        env:
+          SSH_KEY: ${{ secrets.ENGINEERING_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
+      - name: Download dependencies
+        run: make generate
+
+      - name: Download ShiftLeft CLI
+        run: |
+          curl https://cdn.shiftleft.io/download/sl > ${GITHUB_WORKSPACE}/sl && chmod a+rx ${GITHUB_WORKSPACE}/sl
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: NextGen Static Analysis
+        run: echo "https://linear.app/honestbank/issue/ENG-2108/add-shiftleft-go-to-self-service-repositories" # ${GITHUB_WORKSPACE}/sl analyze --strict --wait --app ${{ env.REPO_NAME}} --tag branch=${{ github.head_ref || steps.extract_branch.outputs.branch }} --go --cpg $(pwd)
+        env:
+          SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}

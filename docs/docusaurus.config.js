@@ -51,6 +51,23 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      algolia: {
+        appId: 'JM7YNYJ4SJ',
+
+        // Public API key: it is safe to commit it
+        apiKey: '4112caf510a9e22925d42e634ef332f0',
+
+        indexName: 'kp',
+
+        // Optional: see doc section below
+        contextualSearch: true,
+
+        // Optional: Algolia search parameters
+        searchParameters: {},
+
+        // Optional: path for search page that enabled by default (`false` to disable it)
+        searchPagePath: 'search',
+      },
       navbar: {
         title: 'Kafka Processor',
         logo: {

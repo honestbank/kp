@@ -13,6 +13,7 @@ env:
 
 jobs:
   shiftleft-go:
+    name: shiftleft-go
     timeout-minutes: 10
     runs-on: ubuntu-latest
     strategy:

@@ -1,12 +1,8 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 # Backoff
-When the worker starts receiving failures, ideally, it should slow down the message processing and let the underlying services recover. Doing this is as simple as adding 1 middleware like in the following example:
-
-:::tip
-You don't have to use the exponential backoff as shown in the example, you can bring your own policy as well.
-:::
+The backoff middleware slows down the processing of messages when errors occur. It uses a backoff policy to determine how long to wait between processing attempts.
 
 ### Example {#example}
 
@@ -22,19 +18,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/backoff-policy/policies"
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/middlewares/backoff"
 )
 
-type UserLoggedInEvent struct {
-	UserID string
-}
-
 func main() {
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
-	kp.WithRetryOrPanic("send-login-notification-retries", 10) // + this line adds 10 retries
+	kp := v2.New[kafka.Message]()
 	exponent, duration, maxBackoffCount := 1.5, time.Millisecond*200, 10
 	backoffPolicy := backoff_policy.NewBackoff(policies.GetExponentialPolicy(exponent, duration, maxBackoffCount))
 	kp.AddMiddleware(backoff.NewBackoffMiddleware(backoffPolicy)) // simply add a backoff middleware to back off.
@@ -44,7 +36,7 @@ func main() {
 	}
 }
 
-func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
+func processUserLoggedInEvent(ctx context.Context, message *kafka.Message) error {
 	// here, you can focus on your business logic.
 	fmt.Printf("processing %v\n", message)
 	time.Sleep(time.Millisecond * 200) // simulate long running process

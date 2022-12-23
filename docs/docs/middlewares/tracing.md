@@ -1,11 +1,12 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 # Tracing
-Chances are if you're using Kafka, you'll need distributed tracing. KP comes with a tracing middleware.
+Tracing is a powerful tool that helps understand how a request flows through the system.
+In order to enable tracing in KP, you can add the middlewares.Tracing middleware.
 
-Tracing middleware does not control the format or the destination, it simply creates spans. Setting the destination and format is done by setting a trace provider.
+This middleware will start a new trace span for every message processed and record any errors that occur during processing. It will also inject trace headers into the message if they are not already present.
 
 :::warning
 Using trace middleware without a correctly configured trace provider will result in invalid spans being produced.
@@ -17,13 +18,15 @@ In the following picture, a message failed to be processed 6 times and was succe
 
 ### Example {#example}
 
-Configure trace provider and add `middlewares.Tracing` to enable traces.
+To use this middleware, you will need to provide a `TracerProvider` that creates Tracer instances.
 
 ```go
 package main
 
 import (
 	"context"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/honestbank/kp/v2/middlewares/retry"
 	"os"
 
 	"github.com/honestbank/kp/v2"
@@ -35,14 +38,11 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
 
-type UserLoggedInEvent struct {
-	UserID string
-}
-
 func main() {
 	defer setupTracing()() // this is important and not included in KP
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
-	kp.WithRetryOrPanic("send-login-notification-retries", 10)
+	kp := v2.New[kafka.Message]()
+	kp.AddMiddleware(tracing.NewTracingMiddleware(otel.GetTracerProvider())) // This adds tracing middleware
+	kp.AddMiddleware(retry.NewRetryMiddleware(producer, func(err error) {}))
 	kp.AddMiddleware(tracing.NewTracingMiddleware(otel.GetTracerProvider())) // This adds tracing middleware
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
@@ -50,7 +50,7 @@ func main() {
 	}
 }
 
-func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
+func processUserLoggedInEvent(ctx context.Context, message *kafka.Message) error {
 	// here, you can focus on your business logic.
 	fmt.Printf("processing %v\n", message)
 	time.Sleep(time.Millisecond * 200) // simulate long-running process
@@ -79,3 +79,5 @@ func getConfig() any {
 	return nil // return your config
 }
 ```
+
+With this setup, all messages processed by KP will have trace spans created for them and any errors that occur will be recorded in the trace span. These trace spans can then be exported to a trace backend for further analysis.

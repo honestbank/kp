@@ -3,36 +3,44 @@ sidebar_position: 1
 ---
 
 # Contributing
-Keeping the core of KP small enables us to maintain this project a little easier.
-We aim evolve KP through middleware without changing the core API.
+To provide backwards compatibility guarantees, the core of the KP library should not change. This means that any changes to the core API or the behavior of the core should be avoided.
 
-But we do aim to add more middlewares.
-If you think a middleware would help large group of people then feel free to request it or send a PR.
+However, we do accept pull requests that involve adding new middlewares or making non-breaking changes to existing middlewares. These changes can help evolve the KP library and provide new features and functionality without affecting the core.
 
-:::warning
-If you have found a security problem, please reach out to engineering@honestbank.com
-:::
+## Issue Reports
+If you encounter any problems or bugs while using the KP library, please open an issue on the GitHub repository.
 
+To ensure that your issue is properly addressed, please include the following information in your report:
 
-### Contribution Guidelines {#guidelines}
-Any contribution that adds or improves middlewares without changing the core API will be more likely to be accepted.
+- A clear and concise description of the problem
+- Steps to reproduce the problem
+- The expected behavior
+- The actual behavior
+- Any relevant logs, error messages, or screenshots
 
-If you have a new feature idea that's not applicable to large community, you can simply keep it in your own repository.
+## Pull Requests
+We welcome contributions to the KP library in the form of pull requests.
 
-:::tip
-Searching through existing issues/PRs before attempting to send a PR is always the best idea.
-Even if you're sure no one is working on the same idea as yours, making sure we're onboard with what you're planning will save you some time.
-:::
+Before submitting a pull request, please make sure that your changes meet the following guidelines:
 
-## Code Contributions {#code-contributions}
-First clone this repository, enter `v2` directory and run `go mod download && go mod vendor` this should download all dependencies to your vendor directory.
+- Your code should be well-documented and adhere to the project's style guidelines
+- Your code should be tested and all tests should pass
+- Your changes should not break existing functionality or introduce new bugs
+- Your changes should be focused and narrowly-scoped, rather than attempting to solve a large number of unrelated issues
 
-Make sure you install pre-commit hook, and you follow the same standard the project is already following.
-If you're in doubt, you can always discuss in GitHub.
+To submit a pull request, follow these steps:
 
-## Running tests {#running-tests}
-Because of the nature of this project, we focused heavily on integration tests of the core API.
+- Fork the KP repository
+- Create a new branch for your changes
+- Make your changes and commit them to your branch
+- Push your branch to your fork
+- Open a pull request on the KP repository, describing your changes and why they are necessary
 
-If you're working on a middleware though, feel free to run unit tests on just the middleware package.
+We will review your pull request and provide feedback. If your changes are accepted, we will merge them into the main branch of the repository.
 
-Otherwise, feel free to use docker compose to start entire stack and run all tests including integration tests using `integration` build flag.
+## Additional Notes
+Keep in mind that the core of the KP library should not change to ensure backwards compatibility. If you have an idea for a new feature or functionality that requires changes to the core, please open an issue to discuss it before submitting a pull request.
+
+We highly encourage contributions in the form of new middlewares or non-breaking changes to existing middlewares. These types of changes can help evolve the KP library and provide new features and functionality without affecting the core.
+
+Thank you for considering contributing to the KP library! We appreciate your efforts and look forward to reviewing your pull requests.

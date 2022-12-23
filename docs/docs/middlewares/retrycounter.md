@@ -1,10 +1,9 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Retry Count
-This is an informational middleware.
-The purpose of this middleware is to provide an API to get the current retry count for a message.
+The retry count middleware is a middleware for the KP library that adds the current retry count to the context of the message processing. The retry count is the number of times the message has been retried by the retry middleware.
 
 :::info
 If you forget to add the middleware and tried to access the value, it's going to return `int(0)`
@@ -12,7 +11,7 @@ If you forget to add the middleware and tried to access the value, it's going to
 
 ### Example {#example}
 
-Simply add the `middlewares.RetryCount` before any other middlewares that depend on this information to be present.
+To use the retry count middleware, you first need to add `RetryCountMiddleware`:
 
 ```go
 package main
@@ -20,18 +19,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/honestbank/kp/v2/consumer"
 
 	"github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/middlewares/retry_count"
 )
 
-type UserLoggedInEvent struct {
-	UserID string
+func getConsumer() consumer.Consumer {
+    return nil // omitted for brevity
 }
-
 func main() {
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
-	kp.WithRetryOrPanic("send-login-notification-retries", 10)
+	kp := v2.New[kafka.Message]()
+	kp.AddConsumer(getConsumer())
 	kp.AddMiddleware(retry_count.NewRetryCountMiddleware()) // This adds retry count middleware
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
@@ -39,13 +39,9 @@ func main() {
 	}
 }
 
-func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
+func processUserLoggedInEvent(ctx context.Context, message *kafka.Message) error {
 	count := retry_count.FromContext(ctx) // this is how to get the count
-	fmt.Printf("this message for %s user was processed %d times", message.UserID, count)
+	fmt.Printf("this message was processed %d times", count)
 	return nil // or error
-}
-
-func getConfig() any {
-	return nil // return your config
 }
 ```

@@ -20,6 +20,10 @@ package main
 
 import (
 	"context"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/honestbank/kp/v2/middlewares/consumer"
+	"github.com/honestbank/kp/v2/middlewares/deadletter"
+	"github.com/honestbank/kp/v2/middlewares/retry"
 	"time"
 
 	backoff_policy "github.com/honestbank/backoff-policy"
@@ -39,15 +43,16 @@ func main() {
 	initializeTracer()
 	retryCount := 10
 	applicationName := "send-login-notification-worker"
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
+	kp := v2.New[kafka.Message]()
 	kp.
-		WithRetryOrPanic("send-login-notification-retries", retryCount). // 1 line to enable retries
-		WithDeadletterOrPanic("send-login-notification-failures"). // 1 line to enable deadlettering
+		AddMiddleware(consumer.NewConsumerMiddleware(getConsumer())).
+		AddMiddleware(deadletter.NewDeadletterMiddleware(getDeadletterProducer(), 10, func(err error) {})).
+		AddMiddleware(retry.NewRetryMiddleware(getRetryMiddleware(), func(err error) {})).
 		AddMiddleware(backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10))). // 1 line to enable backoffs
 		AddMiddleware(tracing.NewTracingMiddleware(otel.GetTracerProvider())). // 1 line to enable tracing
 		AddMiddleware(measurement.NewMeasurementMiddleware("path/to/prometheus-push-gateway", applicationName)). // 1 line to enable measurements
 		AddMiddleware(retry_count.NewRetryCountMiddleware())
-	kp.Process(func(ctx context.Context, message UserLoggedInEvent) error {
+	kp.Process(func(ctx context.Context, message *kafka.Message) error {
 		// process the message and return error if it fails. don't worry about retries here.
 		// but if you need to know the current count use the following:
 		count := retry_count.FromContext(ctx)

@@ -3,7 +3,7 @@ sidebar_position: 1
 ---
 
 # Getting Started with KP
-KP is a Kafka message processing framework which makes retries, deadletters, tracing, measurements, etc easy.
+In this guide, we will walk through the steps to set up and use the KP library to process messages from a Kafka topic. We will start by installing the library and its dependencies, then we will write a custom processor function and add middlewares to customize the behavior of the message processing.
 
 It helps you write applications without worrying too much about the retries, deadlettering, backing off when things go wrong, etc. As a developer, simply focus on business logic and business logic only.
 Your code will be free of retries, backoffs and even tracing, but you'll still able to get all those for free.
@@ -67,7 +67,21 @@ func getConfig() any {
 ```
 
 ## Basic Example (processing messages) {#basic-example-kp}
-A very basic example of processing messages would be something like the following
+### Processor function
+The processor function is the main function that is called for each message in the middleware chain. It should perform the main processing of the message and return an error if any.
+
+### Adding Middlewares
+To add middlewares to the KP instance, you can use the AddMiddleware method. This method takes a middleware as an argument and returns a new KP instance with the middleware added to the chain.
+
+### Running the Message Processing
+To start the message processing, you can call the `Run` method on the KP instance and pass the processor function as an argument.
+
+### Stopping the Message Processing
+To stop the message processing, you can call the Stop method on the KP instance:
+
+This method stops the message processing and releases resources. It is important to call the Stop method when you are finished using the KP instance.
+
+Here's what all the above might look like:
 
 ```go
 package main
@@ -75,6 +89,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"time"
 
 	v2 "github.com/honestbank/kp/v2"
@@ -85,24 +100,22 @@ type UserLoggedInEvent struct {
 }
 
 func main() {
-	kp := v2.New[UserLoggedInEvent]("user-logged-in", getConfig())
+	kp := v2.New[kafka.Message]()
+	kp.AddMiddleware(getConsumer())
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling
 	}
 }
 
-func processUserLoggedInEvent(ctx context.Context, message UserLoggedInEvent) error {
+func processUserLoggedInEvent(ctx context.Context, message *kafka.Message) error {
 	// here, you can focus on your business logic.
 	fmt.Printf("processing %v\n", message)
-	time.Sleep(time.Millisecond * 200) // simulate long running process
-	return nil // or error
+	time.Sleep(time.Millisecond * 200) // simulate long-running process
+	return nil                         // or error
 }
 
 func getConfig() any {
-    return nil // return your config
+	return nil // return your config
 }
 ```
-By default, the above doesn't have any additional capacity, it's as simple as using a simple consumer provided by confluent.
-
-KP however provides additional API to enable retries, deadletter topics etc.

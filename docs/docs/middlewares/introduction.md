@@ -3,15 +3,16 @@ sidebar_position: 1
 ---
 
 # Introduction
-Middlewares are the core of KP, almost every feature except the retry and deadletters are built with middlewares.
+Middleware is a software pattern that allows you to intercept and modify the processing of messages in a chain. It is a powerful tool for customizing the behavior of a system and adding additional functionality, such as logging, retries, deadlettering, backoffs, and tracing.
 
-They help us write isolated, testable and maintainable features.
+In the KP library, every feature is implemented as a middleware. This means that you can add or remove features by adding or removing middlewares from the middleware chain.
 
-Middleware come in chain, and they're called in the order they were added.
-Every middleware have ability to halt the operation completely.
+## Adding Middleware to the KP Library
+The KP library provides a way to add middlewares to the middleware chain through the `AddMiddleware`
+
+This method takes a middleware as an argument and returns a new MessageProcessor with the middleware added to the chain. Here is an example of how to use the `AddMiddleware` method:
 
 ## Example {#example}
-To add middleware to KP, simply call `AddMiddleware` and they'll be called in the order they were added.
 
 ```go
 package main
@@ -56,3 +57,8 @@ func getConfig() any {
 	return nil // return your config
 }
 ```
+### Notes {#notes}
+
+- Middlewares are executed in the order they are added to the chain. It is important to consider the order in which middlewares are added.
+- The KP library provides several built-in middlewares for common features, such as consuming messages, retries, deadletters, backoffs, and tracing. You can also write custom middlewares to meet your specific
+

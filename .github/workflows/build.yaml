@@ -66,10 +66,49 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
+
+  trivy-scan:
+    name: trivy-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18"
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Configure ssh-key for private modules
+        env:
+          SSH_KEY: ${{ secrets.ENGINEERING_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      - name: mocks
+        run: make generate
+      - name: Setup go modules
+        run: go clean -modcache;go mod tidy; go mod download; go mod verify; go mod vendor;
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results.sarif'
+
   release:
     name: semantic-release
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ build, trivy-scan ]
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2

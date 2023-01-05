@@ -1,4 +1,4 @@
-package schemaregistry
+package avro_registry
 
 type Config struct {
 	Endpoint string `env:"KP_SCHEMA_REGISTRY_ENDPOINT" required:"true"`

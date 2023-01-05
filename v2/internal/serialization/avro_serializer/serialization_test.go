@@ -1,6 +1,6 @@
 //go:build integration_test
 
-package serialization_test
+package avro_serializer_test
 
 import (
 	"encoding/binary"
@@ -12,7 +12,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/internal/serialization/avro_serializer"
 )
 
 type BenchmarkMessage struct {
@@ -21,19 +21,15 @@ type BenchmarkMessage struct {
 }
 
 func TestSerialization(t *testing.T) {
-	t.Run("returns nil if message is nil", func(t *testing.T) {
-		bytes, err := serialization.Encode(nil, 1)
-		assert.Nil(t, err)
-		assert.Nil(t, bytes)
-	})
 	t.Run("can serialize and deserialize", func(t *testing.T) {
-		bytes, err := serialization.Encode(BenchmarkMessage{
+		serializer := avro_serializer.New[BenchmarkMessage](1)
+		bytes, err := serializer.Encode(BenchmarkMessage{
 			Body:  "my-body",
 			Count: 100,
-		}, 1)
+		})
 		assert.NoError(t, err)
 		assert.NotNil(t, bytes)
-		msg, err := serialization.Decode[BenchmarkMessage](bytes)
+		msg, err := serializer.Decode(bytes)
 		assert.NoError(t, err)
 		assert.NotNil(t, msg)
 		assert.Equal(t, "my-body", msg.Body)
@@ -55,10 +51,11 @@ func TestSerialization(t *testing.T) {
 			// do a hack to get schema id
 			// schemaID := payload[1:5]
 			schemaID := int(binary.BigEndian.Uint32(payload[1:5]))
-			kpPayload, err := serialization.Encode(BenchmarkMessage{
+			serializer := avro_serializer.New[BenchmarkMessage](schemaID)
+			kpPayload, err := serializer.Encode(BenchmarkMessage{
 				Body:  "my-body",
 				Count: i,
-			}, schemaID)
+			})
 			assert.NoError(t, err)
 			assert.Equal(t, len(payload), len(kpPayload))
 			assert.Equal(t, payload, kpPayload)

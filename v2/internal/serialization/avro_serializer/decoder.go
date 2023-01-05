@@ -1,8 +1,12 @@
-package serialization
+package avro_serializer
 
 import (
 	"github.com/heetch/avro"
 )
+
+func (serializer[MessageType]) Decode(payload []byte) (*MessageType, error) {
+	return Decode[MessageType](payload)
+}
 
 func Decode[MessageType any](payload []byte) (*MessageType, error) {
 	var emptyMessage MessageType

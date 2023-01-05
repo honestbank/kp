@@ -8,7 +8,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/internal/serialization/avro_serializer"
 	"github.com/honestbank/kp/v2/middlewares/consumer"
 )
 
@@ -25,7 +25,7 @@ func (m *mockConsumer) GetMessage() *kafka.Message {
 		return nil
 	}
 	m.count = m.count + 1
-	encode, err := serialization.Encode(Payload{Count: m.count}, 1)
+	encode, err := avro_serializer.New[Payload](1).Encode(Payload{Count: m.count})
 	if err != nil {
 		return nil
 	}
@@ -53,7 +53,7 @@ func TestConsumerMiddleware_Process(t *testing.T) {
 		c := &mockConsumer{}
 		middleware := consumer.NewConsumerMiddleware(c)
 		err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
-			decode, err := serialization.Decode[Payload](item.Value)
+			decode, err := avro_serializer.Decode[Payload](item.Value)
 			if err != nil {
 				return err
 			}

@@ -11,7 +11,7 @@ import (
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
 	consumer2 "github.com/honestbank/kp/v2/consumer"
-	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/internal/serialization/avro_serializer"
 	"github.com/honestbank/kp/v2/middlewares/consumer"
 	"github.com/honestbank/kp/v2/middlewares/deadletter"
 	"github.com/honestbank/kp/v2/middlewares/retry"
@@ -59,7 +59,7 @@ func ExampleNew() {
 		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
 		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, 3, func(err error) {})).
 		Run(func(ctx context.Context, ev *kafka.Message) error {
-			val, _ := serialization.Decode[UserLoggedInEvent](ev.Value)
+			val, _ := avro_serializer.Decode[UserLoggedInEvent](ev.Value)
 			fmt.Printf("%s-%d|", val.UserID, retry_count.FromContext(ctx))
 			return errors.New("some error")
 		})

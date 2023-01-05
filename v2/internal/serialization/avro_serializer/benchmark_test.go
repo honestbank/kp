@@ -1,6 +1,6 @@
 //go:build integration_test
 
-package serialization_test
+package avro_serializer_test
 
 import (
 	"os"
@@ -11,7 +11,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/internal/serialization/avro_serializer"
 )
 
 func BenchmarkEncode(b *testing.B) {
@@ -22,11 +22,12 @@ func BenchmarkEncode(b *testing.B) {
 	ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 	assert.NoError(b, err)
 	b.Run("kp", func(b *testing.B) {
+		serializer := avro_serializer.New[BenchmarkMessage](1)
 		for i := 0; i < b.N; i++ {
-			_, err := serialization.Encode(BenchmarkMessage{
+			_, err := serializer.Encode(BenchmarkMessage{
 				Body:  "my-body",
 				Count: 100,
-			}, 1)
+			})
 			assert.NoError(b, err)
 		}
 	})

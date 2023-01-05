@@ -1,6 +1,6 @@
 //go:build integration_test
 
-package schemaregistry_test
+package avro_registry_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honestbank/kp/v2/config"
-	"github.com/honestbank/kp/v2/internal/schemaregistry"
+	"github.com/honestbank/kp/v2/internal/schemaregistry/avro_registry"
 )
 
 type BenchmarkMessage struct {
@@ -17,6 +17,9 @@ type BenchmarkMessage struct {
 }
 
 func TestPublish(t *testing.T) {
-	_, err := schemaregistry.Publish[BenchmarkMessage]("topic-kp", config.SchemaRegistry{Endpoint: "http://localhost:8081"})
+	client, err := avro_registry.New[BenchmarkMessage]("topic-kp", config.SchemaRegistry{Endpoint: "http://localhost:8081"})
+	assert.NoError(t, err)
+
+	_, err = client.Publish()
 	assert.NoError(t, err)
 }

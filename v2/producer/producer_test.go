@@ -7,15 +7,14 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/honestbank/kp/v2/config"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
+	"github.com/honestbank/kp/v2/config"
+	"github.com/honestbank/kp/v2/internal/serialization/avro_serializer"
 	"github.com/honestbank/kp/v2/producer"
 )
 
@@ -50,11 +49,14 @@ func TestNewProducer(t *testing.T) {
 		})
 		t.Run("fails initializing producer if there's a breaking change in schema", func(t *testing.T) {
 			_, err := producer.New[MyMessage]("test-topic-1", cfg)
+			assert.NoError(t, err)
+
 			_, err = producer.New[MyMessageBreaking]("test-topic-1", cfg)
 			assert.Error(t, err)
 		})
 		t.Run("non breaking change allows initialization", func(t *testing.T) {
 			_, err := producer.New[MyMessage]("test-topic-2", cfg)
+			assert.NoError(t, err)
 			_, err = producer.New[MyMessage]("test-topic-2", cfg)
 			assert.NoError(t, err)
 		})
@@ -85,10 +87,11 @@ func TestNew(t *testing.T) {
 			// do a hack to get schema id
 			// schemaID := payload[1:5]
 			schemaID := int(binary.BigEndian.Uint32(payload[1:5]))
-			kPayload, err := serialization.Encode(BenchmarkMessage{
+			serializer := avro_serializer.New[BenchmarkMessage](schemaID)
+			kPayload, err := serializer.Encode(BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
-			}, schemaID)
+			})
 			assert.Equal(t, kPayload, payload)
 			assert.Equal(t, len(kPayload), len(payload))
 			err = confluentProducer.Produce(&kafka.Message{
@@ -110,5 +113,21 @@ func TestNew(t *testing.T) {
 			})
 			assert.NoError(t, err)
 		}
+	})
+}
+
+func TestNewWithOptions(t *testing.T) {
+	cfg := config.KPConfig{
+		KafkaConfig:          config.Kafka{BootstrapServers: "localhost"}.WithDefaults(),
+		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"},
+	}
+	t.Run("happy", func(t *testing.T) {
+		p, err := producer.NewWithOptions[MyMessage]("test-topic-with-options", cfg, producer.WithJSONSerializer[MyMessage]())
+		assert.NoError(t, err)
+		err = p.Produce(context.Background(), MyMessage{
+			Id:    "123",
+			Count: 1,
+		})
+		assert.NoError(t, err)
 	})
 }

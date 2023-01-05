@@ -6,8 +6,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/honestbank/kp/v2/config"
-	"github.com/honestbank/kp/v2/internal/schemaregistry"
-	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/internal/tracing"
 )
 
@@ -15,10 +13,11 @@ type producer[BodyType any] struct {
 	schemaID int
 	k        *kafka.Producer
 	topic    string
+	opts     Options[BodyType]
 }
 
 func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error {
-	value, err := serialization.Encode(message, p.schemaID)
+	value, err := p.opts.Serialize(message)
 	if err != nil {
 		return err
 	}
@@ -52,16 +51,32 @@ func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
 }
 
 func New[MessageType any](topic string, cfg config.KPConfig) (Producer[MessageType], error) {
-	schemaID, err := schemaregistry.Publish[MessageType](topic, cfg.SchemaRegistryConfig)
+	opts, err := defaultOptions[MessageType](topic, cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	return doNew[MessageType](topic, cfg, opts)
+}
+
+func NewWithOptions[MessageType any](topic string, cfg config.KPConfig, opts Options[MessageType]) (Producer[MessageType], error) {
+	err := opts.PublishSchema()
+	if err != nil {
+		return nil, err
+	}
+
+	return doNew[MessageType](topic, cfg, opts)
+}
+
+func doNew[MessageType any](topic string, cfg config.KPConfig, opts Options[MessageType]) (Producer[MessageType], error) {
 	k, err := kafka.NewProducer(config.GetKafkaConfig(cfg.KafkaConfig))
+	if err != nil {
+		return nil, err
+	}
 
 	return producer[MessageType]{
-		k:        k,
-		schemaID: *schemaID,
-		topic:    topic,
+		k:     k,
+		topic: topic,
+		opts:  opts,
 	}, nil
 }

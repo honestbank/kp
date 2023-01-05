@@ -43,18 +43,19 @@ func TestKP(t *testing.T) {
 	_, err = c.CreateTopics(context.Background(), []kafka.TopicSpecification{{Topic: "kp-topic", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-retry", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-dlt", ReplicationFactor: 1, NumPartitions: 1}})
 	assert.NoError(t, err)
 
-	p, err := producer.New[MyType]("kp-topic", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	cfg := config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig}
+	p, err := producer.New[MyType]("kp-topic", cfg)
 	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
 	p.Flush()
 	assert.NoError(t, err)
 	kp := v2.New[kafka.Message]()
 	messageProcessCount := 0
 	const retryCount = 10
-	retryTopicProducer, err := producer.New[UserLoggedInEvent]("kp-topic-retry", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	retryTopicProducer, err := producer.New[MyType]("kp-topic-retry", cfg)
 	if err != nil {
 		panic(err)
 	}
-	dltProducer, err := producer.New[UserLoggedInEvent]("kp-topic-dlt", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	dltProducer, err := producer.New[MyType]("kp-topic-dlt", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
 	if err != nil {
 		panic(err)
 	}

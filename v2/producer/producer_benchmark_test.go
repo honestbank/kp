@@ -6,14 +6,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/honestbank/kp/v2/config"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/producer"
 )
 

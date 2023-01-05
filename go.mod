@@ -3,7 +3,7 @@ module github.com/honestbank/kp
 go 1.18
 
 require (
-	github.com/Shopify/sarama v1.34.1
+	github.com/Shopify/sarama v1.37.2
 	github.com/golang/mock v1.6.0
 	github.com/honestbank/backoff-policy v1.0.0
 	github.com/stretchr/testify v1.7.1

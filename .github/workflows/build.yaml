@@ -67,6 +67,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
+      - name: npm-build
+        run: cd docs && npm ci && npm run build
+
   trivy-scan:
     name: trivy-scan
     runs-on: ubuntu-latest

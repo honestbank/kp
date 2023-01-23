@@ -18,6 +18,7 @@ type kp[MessageType any] struct {
 func (t *kp[MessageType]) getShouldContinue() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
 	return t.shouldContinue
 }
 func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType] {

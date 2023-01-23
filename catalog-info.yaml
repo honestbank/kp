@@ -13,5 +13,5 @@ spec:
   type: library
   lifecycle: production
   owner: group:spend-squad
-  dependsOn: 
+  dependsOn:
     - component:backoff-policy

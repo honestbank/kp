@@ -21,6 +21,7 @@ func (t *kp[MessageType]) getShouldContinue() bool {
 
 	return t.shouldContinue
 }
+
 func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType] {
 	t.chain.AddMiddleware(middleware)
 
@@ -37,10 +38,12 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 	t.chain.AddMiddleware(middleware.FinalMiddleware[*MessageType, error](func(ctx context.Context, msg *MessageType) error {
 		return processor(ctx, msg)
 	}))
+
 	for t.getShouldContinue() {
 		ctx := context.Background()
 		_ = t.chain.Process(ctx, nil)
 	}
+
 	return nil
 }
 

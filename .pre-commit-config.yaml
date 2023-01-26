@@ -3,7 +3,7 @@
 exclude: docs/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -11,11 +11,11 @@ repos:
       - id: detect-aws-credentials
         args: [ '--allow-missing-credentials' ]
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.46.2
+    rev: v1.50.1
     hooks:
       - id: golangci-lint
   - repo: https://github.com/TekWizely/pre-commit-golang
-    rev: v1.0.0-beta.5
+    rev: v1.0.0-rc.1
     hooks:
       - id: go-imports
   - repo: local

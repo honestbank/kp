@@ -2,7 +2,7 @@ package v2
 
 import (
 	"context"
-	"sync"
+	"sync/atomic"
 
 	"github.com/honestbank/kp/v2/internal/middleware"
 )
@@ -11,15 +11,11 @@ type Processor[MessageType any] func(ctx context.Context, item *MessageType) err
 
 type kp[MessageType any] struct {
 	chain          middleware.Processor[*MessageType, error]
-	shouldContinue bool
-	mu             sync.Mutex
+	shouldContinue int32
 }
 
 func (t *kp[MessageType]) getShouldContinue() bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	return t.shouldContinue
+	return atomic.LoadInt32(&t.shouldContinue) > 0
 }
 
 func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType] {
@@ -29,9 +25,7 @@ func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*Messag
 }
 
 func (t *kp[MessageType]) Stop() {
-	t.mu.Lock()
-	t.shouldContinue = false
-	t.mu.Unlock()
+	atomic.StoreInt32(&t.shouldContinue, 0)
 }
 
 func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
@@ -50,6 +44,6 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 func New[MessageType any]() MessageProcessor[MessageType] {
 	return &kp[MessageType]{
 		chain:          middleware.New[*MessageType, error](),
-		shouldContinue: true,
+		shouldContinue: 1,
 	}
 }

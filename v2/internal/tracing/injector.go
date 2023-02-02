@@ -3,7 +3,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/honestbank/kp/v2/kafkaheaders"

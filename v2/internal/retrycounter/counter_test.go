@@ -3,7 +3,7 @@ package retrycounter_test
 import (
 	"testing"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honestbank/kp/v2/internal/retrycounter"

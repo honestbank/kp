@@ -7,7 +7,7 @@ import (
 	"github.com/honestbank/kp/v2/kafkaheaders"
 	"github.com/honestbank/kp/v2/middlewares/tracing"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/sdk/trace"
 )

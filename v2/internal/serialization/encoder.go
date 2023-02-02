@@ -3,7 +3,7 @@ package serialization
 import (
 	"reflect"
 
-	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
 	"github.com/heetch/avro"
 )
 

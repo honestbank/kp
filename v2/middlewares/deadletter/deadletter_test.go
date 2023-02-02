@@ -7,7 +7,7 @@ import (
 
 	"github.com/honestbank/kp/v2/internal/retrycounter"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honestbank/kp/v2/middlewares/deadletter"

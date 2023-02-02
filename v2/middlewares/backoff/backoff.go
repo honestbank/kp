@@ -3,7 +3,7 @@ package backoff
 import (
 	"context"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/kp/v2/middlewares"

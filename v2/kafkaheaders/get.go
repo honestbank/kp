@@ -1,6 +1,6 @@
 package kafkaheaders
 
-import "github.com/confluentinc/confluent-kafka-go/kafka"
+import "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 func Get(header string, message *kafka.Message) *string {
 	for _, h := range message.Headers {

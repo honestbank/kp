@@ -1,6 +1,6 @@
 package kafkaheaders
 
-import "github.com/confluentinc/confluent-kafka-go/kafka"
+import "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 func Set(message *kafka.Message, header string, value string) {
 	for i, h := range message.Headers {

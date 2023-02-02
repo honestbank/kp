@@ -3,7 +3,7 @@ package schemaregistry
 import (
 	"fmt"
 
-	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
 	"github.com/heetch/avro"
 
 	"github.com/honestbank/kp/v2/config"

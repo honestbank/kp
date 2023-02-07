@@ -37,8 +37,6 @@ func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error
 }
 
 func (p producer[BodyType]) Flush() error {
-	// I just felt like 3000 because 3 second should be enough for messages to be flushed
-	// we'll need to optimize this as we go
 	p.k.Flush()
 
 	return nil
@@ -54,7 +52,7 @@ func New[MessageType any](topic string, cfg config.KPConfig) (Producer[MessageTy
 		return nil, err
 	}
 
-	k, err := NewUntyped(topic, cfg)
+	k, err := NewUntyped(topic, cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}

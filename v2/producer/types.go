@@ -11,3 +11,8 @@ type Producer[BodyType any] interface {
 	Produce(context context.Context, message BodyType) error
 	ProduceRaw(message *kafka.Message) error
 }
+
+type UntypedProducer interface {
+	ProduceRaw(message *kafka.Message) error
+	Flush() error
+}

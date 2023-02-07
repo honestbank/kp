@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honestbank/kp/v2/middlewares/sigint"
@@ -31,6 +31,42 @@ func TestSigInt_Process(t *testing.T) {
 			return nil
 		})
 		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		time.Sleep(time.Millisecond * 50)
+		assert.True(t, called)
+	})
+
+	t.Run("when there's a sigkill signal, it calls a callback", func(t *testing.T) {
+		called := false
+		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+			called = true
+		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+			return nil
+		})
+		syscall.Kill(syscall.Getpid(), syscall.SIGKILL)
+		time.Sleep(time.Millisecond * 50)
+		assert.True(t, called)
+	})
+
+	t.Run("when there's a sigterm signal, it calls a callback", func(t *testing.T) {
+		called := false
+		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+			called = true
+		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+			return nil
+		})
+		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+		time.Sleep(time.Millisecond * 50)
+		assert.True(t, called)
+	})
+
+	t.Run("when there's a sighup signal, it calls a callback", func(t *testing.T) {
+		called := false
+		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+			called = true
+		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+			return nil
+		})
+		syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
 		time.Sleep(time.Millisecond * 50)
 		assert.True(t, called)
 	})

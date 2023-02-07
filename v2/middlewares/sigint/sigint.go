@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/honestbank/kp/v2/middlewares"
 )
@@ -16,7 +17,7 @@ func (s sigInt[T]) Process(ctx context.Context, item T, next func(ctx context.Co
 
 func registerInterruptSignal(cb func()) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGHUP)
 	go func() {
 		<-c
 		cb()

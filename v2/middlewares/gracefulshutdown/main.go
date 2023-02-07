@@ -1,4 +1,4 @@
-package sigint
+package gracefulshutdown
 
 import (
 	"context"
@@ -17,14 +17,14 @@ func (s sigInt[T]) Process(ctx context.Context, item T, next func(ctx context.Co
 
 func registerInterruptSignal(cb func()) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGHUP)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
 		<-c
 		cb()
 	}()
 }
 
-func NewSigIntMiddleware[T any](stopFunction func()) middlewares.KPMiddleware[T] {
+func NewSignalMiddleware[T any](stopFunction func()) middlewares.KPMiddleware[T] {
 	registerInterruptSignal(stopFunction)
 
 	return sigInt[T]{}

@@ -1,4 +1,4 @@
-package sigint_test
+package gracefulshutdown_test
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/middlewares/sigint"
+	"github.com/honestbank/kp/v2/middlewares/gracefulshutdown"
 )
 
-func TestSigInt_Process(t *testing.T) {
+func TestSignalMiddleware_Process(t *testing.T) {
 	t.Run("simply calls next", func(t *testing.T) {
 		called := false
-		sigint.NewSigIntMiddleware[*kafka.Message](func() {}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+		gracefulshutdown.NewSignalMiddleware[*kafka.Message](func() {}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 			called = true
 
 			return nil
@@ -25,7 +25,7 @@ func TestSigInt_Process(t *testing.T) {
 
 	t.Run("when there's a sigint signal, it calls a callback", func(t *testing.T) {
 		called := false
-		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+		gracefulshutdown.NewSignalMiddleware[*kafka.Message](func() {
 			called = true
 		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 			return nil
@@ -35,21 +35,9 @@ func TestSigInt_Process(t *testing.T) {
 		assert.True(t, called)
 	})
 
-	t.Run("when there's a sigkill signal, it calls a callback", func(t *testing.T) {
-		called := false
-		sigint.NewSigIntMiddleware[*kafka.Message](func() {
-			called = true
-		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
-			return nil
-		})
-		syscall.Kill(syscall.Getpid(), syscall.SIGKILL)
-		time.Sleep(time.Millisecond * 50)
-		assert.True(t, called)
-	})
-
 	t.Run("when there's a sigterm signal, it calls a callback", func(t *testing.T) {
 		called := false
-		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+		gracefulshutdown.NewSignalMiddleware[*kafka.Message](func() {
 			called = true
 		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 			return nil
@@ -61,12 +49,24 @@ func TestSigInt_Process(t *testing.T) {
 
 	t.Run("when there's a sighup signal, it calls a callback", func(t *testing.T) {
 		called := false
-		sigint.NewSigIntMiddleware[*kafka.Message](func() {
+		gracefulshutdown.NewSignalMiddleware[*kafka.Message](func() {
 			called = true
 		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 			return nil
 		})
 		syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+		time.Sleep(time.Millisecond * 50)
+		assert.True(t, called)
+	})
+
+	t.Run("when there's a sigquit signal, it calls a callback", func(t *testing.T) {
+		called := false
+		gracefulshutdown.NewSignalMiddleware[*kafka.Message](func() {
+			called = true
+		}).Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+			return nil
+		})
+		syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
 		time.Sleep(time.Millisecond * 50)
 		assert.True(t, called)
 	})

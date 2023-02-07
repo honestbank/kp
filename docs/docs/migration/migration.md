@@ -1,7 +1,7 @@
 # Migration from v1
 
 :::danger
-Your workload may begin processing from the earliest data due to improper migration from KP v1 to v2 or from any other kakfa framework, which could result in processing the same data twice.
+Improper migration may cause your workload to re-consume messages from offset 0 - essentially re-processing all messages.
 :::
 
 :::warning

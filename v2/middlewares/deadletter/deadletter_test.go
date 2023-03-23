@@ -27,7 +27,7 @@ func (r producerMock) Flush() error {
 }
 
 func (r producerMock) Produce(context context.Context, message *kafka.Message) error {
-	return nil
+	return r.produceRaw(message)
 }
 
 func newProducer(cb func(item *kafka.Message) error) producer.UntypedProducer {

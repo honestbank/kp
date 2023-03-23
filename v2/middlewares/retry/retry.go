@@ -15,7 +15,7 @@ type retry struct {
 }
 
 type Producer interface {
-	ProduceRaw(item *kafka.Message) error
+	Produce(ctx context.Context, item *kafka.Message) error
 }
 
 func (r retry) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
@@ -24,7 +24,7 @@ func (r retry) Process(ctx context.Context, item *kafka.Message, next func(ctx c
 		return nil
 	}
 	retrycounter.SetCount(item, retrycounter.GetCount(item)+1)
-	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
+	err = r.producer.Produce(ctx, &kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 	if err != nil {
 		r.onProduceErrors(err)
 	}

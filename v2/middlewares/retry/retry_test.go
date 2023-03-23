@@ -3,6 +3,7 @@ package retry_test
 import (
 	"context"
 	"errors"
+	"github.com/honestbank/kp/v2/internal/middleware"
 	"testing"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -21,15 +22,14 @@ func (r producerMock) Flush() error {
 	return nil
 }
 
-func (r producerMock) Produce(context context.Context, message any) error {
+func (r producerMock) Produce(context context.Context, message *kafka.Message) error {
 	return nil
 }
 
-func (r producerMock) ProduceRaw(message *kafka.Message) error {
-	return r.produceRaw(message)
+func (r producerMock) SetMiddlewares([]middleware.Middleware[*kafka.Message, error]) {
 }
 
-func newProducer(cb func(item *kafka.Message) error) producer.Producer[any] {
+func newProducer(cb func(item *kafka.Message) error) producer.UntypedProducer {
 	return producerMock{produceRaw: cb}
 }
 

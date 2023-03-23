@@ -50,11 +50,11 @@ func TestKP(t *testing.T) {
 	kp := v2.New[kafka.Message]()
 	messageProcessCount := 0
 	const retryCount = 10
-	retryTopicProducer, err := producer.New[UserLoggedInEvent]("kp-topic-retry", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	retryTopicProducer, err := producer.NewUntyped("kp-topic-retry", kafkaCfg)
 	if err != nil {
 		panic(err)
 	}
-	dltProducer, err := producer.New[UserLoggedInEvent]("kp-topic-dlt", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
+	dltProducer, err := producer.NewUntyped("kp-topic-dlt", kafkaCfg)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package measurement
+package pushgateway
 
 import (
 	"context"
@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/honestbank/kp/v2/middlewares"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
-
-	"github.com/honestbank/kp/v2/middlewares"
 )
 
 var operationDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{

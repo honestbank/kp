@@ -29,14 +29,14 @@ package main
 import (
 	"context"
 	"fmt"
-	consumer2 "github.com/honestbank/kp/v2/consumer"
-	"github.com/honestbank/kp/v2/middlewares/consumer"
 	"time"
 
 	backoff_policy "github.com/honestbank/backoff-policy"
 	"github.com/honestbank/backoff-policy/policies"
 	v2 "github.com/honestbank/kp/v2"
-	"github.com/honestbank/kp/v2/middlewares/measurement"
+	consumer2 "github.com/honestbank/kp/v2/consumer"
+	"github.com/honestbank/kp/v2/middlewares/consumer"
+	"github.com/honestbank/kp/v2/middlewares/measurement/pushgateway"
 )
 
 type UserLoggedInEvent struct {
@@ -52,7 +52,7 @@ func main() {
 	applicationName := "send-login-notification-worker"
 	kp := v2.New[kafka.Message]()
 	kp.AddMiddleware(consumer.NewConsumerMiddleware(getConsumer()))
-	kp.AddMiddleware(measurement.NewMeasurementMiddleware("http://path/to/push/gateway", applicationName)) // simply add a measurement middleware to get free metrics
+	kp.AddMiddleware(pushgateway.NewMeasurementMiddleware("http://path/to/push/gateway", applicationName)) // simply add a measurement middleware to get free metrics
 	err := kp.Process(processUserLoggedInEvent)
 	if err != nil {
 		panic(err) // do better error handling

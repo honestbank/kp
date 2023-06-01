@@ -128,7 +128,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v3
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

@@ -114,6 +114,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ build, trivy-scan ]
     steps:
+      - name: setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
       - name: Set up Golang
         uses: actions/setup-go@v2
         with:

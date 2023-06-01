@@ -117,7 +117,7 @@ jobs:
       - name: setup nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: "16.x"
+          node-version: "18.x"
       - name: Set up Golang
         uses: actions/setup-go@v2
         with:

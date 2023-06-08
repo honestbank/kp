@@ -23,11 +23,13 @@ func (r logger) Process(ctx context.Context, item *kafka.Message, next func(ctx 
 	err := next(context.WithValue(ctx, &ctxKey{}, scopedLogger), item)
 	if err != nil {
 		scopedLogger.Error("Failed while processing the message", zap.Error(err))
-	} else {
-		scopedLogger.Info("Successfully processed the message")
+
+		return err
 	}
 
-	return err
+	scopedLogger.Info("Successfully processed the message")
+
+	return nil
 }
 
 func NewLoggerMiddleware(zapLogger *zap.Logger) middlewares.KPMiddleware[*kafka.Message] {

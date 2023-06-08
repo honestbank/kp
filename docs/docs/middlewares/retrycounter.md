@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # Retry Count
@@ -19,10 +19,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/honestbank/kp/v2/consumer"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/honestbank/kp/v2"
+	"github.com/honestbank/kp/v2/consumer"
 	"github.com/honestbank/kp/v2/middlewares/retry_count"
 )
 

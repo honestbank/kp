@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Tracing
@@ -25,11 +25,11 @@ package main
 
 import (
 	"context"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/honestbank/kp/v2/middlewares/retry"
 	"os"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/honestbank/kp/v2"
+	"github.com/honestbank/kp/v2/middlewares/retry"
 	"github.com/honestbank/kp/v2/middlewares/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"

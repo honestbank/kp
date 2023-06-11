@@ -60,9 +60,11 @@ func (mr *MockKafkaProcessorMockRecorder) Process(arg0 interface{}) *gomock.Call
 }
 
 // Start mocks base method.
-func (m *MockKafkaProcessor) Start(arg0 context.Context) {
+func (m *MockKafkaProcessor) Start(arg0 context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start", arg0)
+	ret := m.ctrl.Call(m, "Start", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Start indicates an expected call of Start.

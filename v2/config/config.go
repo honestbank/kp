@@ -16,6 +16,8 @@ type Kafka struct {
 	Password                 *string
 	ConsumerSessionTimeoutMs *int
 	ConsumerAutoOffsetReset  *string
+	ClientID                 *string
+	Debug                    *string
 }
 
 func (s Kafka) WithDefaults() Kafka {
@@ -28,6 +30,8 @@ func (s Kafka) WithDefaults() Kafka {
 		Password:                 s.Password,
 		ConsumerSessionTimeoutMs: defaultIfNil(s.ConsumerSessionTimeoutMs, 6000),
 		ConsumerAutoOffsetReset:  defaultIfNil(s.ConsumerAutoOffsetReset, "earliest"),
+		ClientID:                 defaultIfNil(s.ClientID, "rdkafka"),
+		Debug:                    s.Debug,
 	}
 }
 
@@ -53,6 +57,8 @@ func GetKafkaConfig(kafkaConfig Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "security.protocol", kafkaConfig.SecurityProtocol)
 	hydrateIfNotNil(cfg, "sasl.username", kafkaConfig.Username)
 	hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
+	hydrateIfNotNil(cfg, "debug", kafkaConfig.Debug)
+	hydrateIfNotNil(cfg, "client.id", kafkaConfig.ClientID)
 
 	return cfg
 }
@@ -62,6 +68,7 @@ func GetKafkaConsumerConfig(config Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "group.id", &config.ConsumerGroupName)
 	hydrateIfNotNil(cfg, "auto.offset.reset", config.ConsumerAutoOffsetReset)
 	hydrateIfNotNil(cfg, "session.timeout.ms", config.ConsumerSessionTimeoutMs)
+	hydrateIfNotNil(cfg, "debug", config.Debug)
 
 	return cfg
 }

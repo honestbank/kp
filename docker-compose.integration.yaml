@@ -17,7 +17,7 @@ services:
     networks:
       kafka:
   local-kafka1:
-    image: confluentinc/cp-kafka:5.5.5
+    image: confluentinc/cp-kafka:7.3.2
     hostname: local-kafka1
     container_name: local-kafka1
     restart: "always"
@@ -38,7 +38,7 @@ services:
     networks:
       kafka:
   local-kafka2:
-    image: confluentinc/cp-kafka:5.5.5
+    image: confluentinc/cp-kafka:7.3.2
     hostname: local-kafka2
     container_name: local-kafka2
     restart: "always"
@@ -59,7 +59,7 @@ services:
     networks:
       kafka:
   local-kafka3:
-    image: confluentinc/cp-kafka:5.5.5
+    image: confluentinc/cp-kafka:7.3.2
     hostname: local-kafka3
     container_name: local-kafka3
     restart: "always"

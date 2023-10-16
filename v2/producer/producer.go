@@ -18,22 +18,36 @@ type producer[BodyType any] struct {
 }
 
 func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error {
-	value, err := serialization.Encode(message, p.schemaID)
+	return doProduce(ctx, p.k, nil, message, &p.schemaID, &p.topic)
+}
+
+func (p producer[BodyType]) ProduceWithKey(ctx context.Context, key []byte, message BodyType) error {
+	return doProduce(ctx, p.k, key, message, &p.schemaID, &p.topic)
+}
+
+func doProduce[BodyType any](ctx context.Context, p UntypedProducer, key []byte, message BodyType, schemaID *int, topic *string) error {
+	value, err := serialization.Encode(message, *schemaID)
 	if err != nil {
 		return err
 	}
 
 	partition := kafka.TopicPartition{
-		Topic:     &p.topic,
+		Topic:     topic,
 		Partition: kafka.PartitionAny,
 	}
+
 	msg := &kafka.Message{
 		TopicPartition: partition,
 		Value:          value,
 	}
+
+	if key != nil {
+		msg.Key = key
+	}
+
 	tracing.InjectTraceHeaders(ctx, msg)
 
-	return p.k.ProduceRaw(msg)
+	return p.ProduceRaw(msg)
 }
 
 func (p producer[BodyType]) Flush() error {

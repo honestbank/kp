@@ -25,6 +25,10 @@ func (r producerMock) Produce(context context.Context, message any) error {
 	return nil
 }
 
+func (r producerMock) ProduceWithKey(context context.Context, key []byte, message any) error {
+	return nil
+}
+
 func (r producerMock) ProduceRaw(message *kafka.Message) error {
 	return r.produceRaw(message)
 }

@@ -5,6 +5,7 @@ package producer_test
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"testing"
 
 	"github.com/honestbank/kp/v2/config"
@@ -105,6 +106,20 @@ func TestNew(t *testing.T) {
 
 		for i := 0; i < 25000; i++ {
 			err := kp.Produce(context.Background(), BenchmarkMessage{
+				Body:  "hello-world",
+				Count: i,
+			})
+			assert.NoError(t, err)
+		}
+	})
+	t.Run("produce through kp with keys", func(t *testing.T) {
+		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
+		assert.NoError(t, err)
+		defer kp.Flush()
+
+		for i := 0; i < 25000; i++ {
+			key := fmt.Sprintf("key-%d", i)
+			err := kp.ProduceWithKey(context.Background(), []byte(key), BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
 			})

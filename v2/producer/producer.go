@@ -37,12 +37,9 @@ func doProduce[BodyType any](ctx context.Context, p UntypedProducer, key []byte,
 	}
 
 	msg := &kafka.Message{
+		Key:            key,
 		TopicPartition: partition,
 		Value:          value,
-	}
-
-	if key != nil {
-		msg.Key = key
 	}
 
 	tracing.InjectTraceHeaders(ctx, msg)

@@ -43,10 +43,10 @@ jobs:
         run: docker compose up -d
       - name: wait for kafka
         run: |
-          wget https://downloads.apache.org/kafka/3.4.1/kafka_2.12-3.4.1.tgz
-          tar -xzf kafka_2.12-3.4.1.tgz
-          ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-          ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+          wget https://downloads.apache.org/kafka/3.4.1/kafka_2.13-3.4.1.tgz
+          tar -xzf kafka_2.13-3.4.1.tgz
+          ./kafka_2.13-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+          ./kafka_2.13-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
       - run: sleep 10
       - name: Test and generate code coverage
         run: go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
@@ -54,8 +54,8 @@ jobs:
       - run: docker compose -f ./v2/docker-compose.yaml up -d
       - name: wait for kafka
         run: |
-          ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-          ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+          ./kafka_2.13-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+          ./kafka_2.13-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
       - run: sleep 10
       - run: cd v2 && go test -v --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
       - run: tail -n +2 v2/coverage.txt >> coverage.txt && rm v2/coverage.txt

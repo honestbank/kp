@@ -50,7 +50,7 @@ func New(topics []string, cfg config.Kafka) (Consumer, error) {
 	return consumer{kakfaConsumer: k}, nil
 }
 
-func NewFromAssignments(topicPartitions []kafka.TopicPartition, cfg config.Kafka) (Consumer, error) {
+func NewFromAssignments(assignments []kafka.TopicPartition, cfg config.Kafka) (Consumer, error) {
 	kafkaConfig := config.GetKafkaConsumerConfig(cfg)
 	_ = kafkaConfig.SetKey("enable.auto.commit", false)
 	k, err := kafka.NewConsumer(kafkaConfig)
@@ -58,7 +58,7 @@ func NewFromAssignments(topicPartitions []kafka.TopicPartition, cfg config.Kafka
 		return nil, err
 	}
 
-	err = k.Assign(topicPartitions)
+	err = k.Assign(assignments)
 	if err != nil {
 		return nil, err
 	}

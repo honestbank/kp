@@ -7,11 +7,11 @@ import (
 )
 
 type consumer struct {
-	kakfaConsumer *kafka.Consumer
+	kafkaConsumer *kafka.Consumer
 }
 
 func (c consumer) GetMessage() *kafka.Message {
-	ev := c.kakfaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
+	ev := c.kafkaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
 	if ev == nil {
 		return nil
 	}
@@ -30,7 +30,7 @@ func getMessageOrNil(event kafka.Event) *kafka.Message {
 }
 
 func (c consumer) Commit(message *kafka.Message) error {
-	_, err := c.kakfaConsumer.CommitMessage(message)
+	_, err := c.kafkaConsumer.CommitMessage(message)
 
 	return err
 }
@@ -47,7 +47,7 @@ func New(topics []string, cfg config.Kafka) (Consumer, error) {
 		return nil, err
 	}
 
-	return consumer{kakfaConsumer: k}, nil
+	return consumer{kafkaConsumer: k}, nil
 }
 
 func NewFromAssignments(assignments []kafka.TopicPartition, cfg config.Kafka) (Consumer, error) {
@@ -62,9 +62,9 @@ func NewFromAssignments(assignments []kafka.TopicPartition, cfg config.Kafka) (C
 	if err != nil {
 		return nil, err
 	}
-	return consumer{kakfaConsumer: k}, nil
+	return consumer{kafkaConsumer: k}, nil
 }
 
 func (c consumer) GetAssignments() ([]kafka.TopicPartition, error) {
-	return c.kakfaConsumer.Assignment()
+	return c.kafkaConsumer.Assignment()
 }

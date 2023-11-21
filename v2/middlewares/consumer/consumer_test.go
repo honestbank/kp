@@ -37,6 +37,11 @@ func (m *mockConsumer) GetMessage() *kafka.Message {
 func (m *mockConsumer) Commit(message *kafka.Message) error {
 	return nil
 }
+
+func (m *mockConsumer) GetAssignments() ([]kafka.TopicPartition, error) {
+	return nil, nil
+}
+
 func TestConsumerMiddleware_Process(t *testing.T) {
 	t.Run("if the message is not nil, it doesn't call GetMessage", func(t *testing.T) {
 		c := &mockConsumer{}

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 9
 ---
 The deadletter middleware is used to send messages that have failed processing to a deadletter topic after a certain number of retries. This can be useful for identifying and debugging messages that are consistently causing processing errors.
 

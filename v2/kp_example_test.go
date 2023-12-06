@@ -36,11 +36,11 @@ func ExampleNew() {
 		},
 	}
 
-	retryTopicProducer, err := producer.New[UserLoggedInEvent]("user-logged-in-rewards-processor-retry", kpConfig)
+	retryTopicProducer, err := producer.NewUntyped("user-logged-in-rewards-processor-retry", kpConfig.KafkaConfig)
 	if err != nil {
 		panic(err)
 	}
-	dltProducer, err := producer.New[UserLoggedInEvent]("user-logged-in-rewards-processor-dlt", kpConfig)
+	dltProducer, err := producer.NewUntyped("user-logged-in-rewards-processor-dlt", kpConfig.KafkaConfig)
 	if err != nil {
 		panic(err)
 	}

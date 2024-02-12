@@ -15,8 +15,8 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/producer"
+	"github.com/honestbank/kp/v2/serialization"
 )
 
 type MyMessage struct {

@@ -8,8 +8,8 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/middlewares/consumer"
+	"github.com/honestbank/kp/v2/serialization"
 )
 
 type mockConsumer struct {

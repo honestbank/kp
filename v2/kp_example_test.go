@@ -11,12 +11,12 @@ import (
 	v2 "github.com/honestbank/kp/v2"
 	"github.com/honestbank/kp/v2/config"
 	consumer2 "github.com/honestbank/kp/v2/consumer"
-	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/middlewares/consumer"
 	"github.com/honestbank/kp/v2/middlewares/deadletter"
 	"github.com/honestbank/kp/v2/middlewares/retry"
 	"github.com/honestbank/kp/v2/middlewares/retry_count"
 	"github.com/honestbank/kp/v2/producer"
+	"github.com/honestbank/kp/v2/serialization"
 )
 
 type UserLoggedInEvent struct {

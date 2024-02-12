@@ -7,8 +7,8 @@ import (
 
 	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/internal/schemaregistry"
-	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/internal/tracing"
+	"github.com/honestbank/kp/v2/serialization"
 )
 
 type producer[BodyType any] struct {

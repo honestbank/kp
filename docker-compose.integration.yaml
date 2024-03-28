@@ -61,3 +61,14 @@ services:
     image: oittaa/gcp-storage-emulator:latest
     ports:
       - "8080:8080"
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    hostname: kafdrop
+    restart: "always"
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:19092"
+    depends_on:
+      - "kafka"

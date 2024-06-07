@@ -10,30 +10,25 @@
         "skip-dirs-use-default": true,
         "tests": true
     },
+    "issues":  {
+        "exclude-rules": {
+            "path": "_test.go",
+            "linters": ["errcheck"]
+        }
+    },
     "linters": {
         "enable": [
-            "deadcode",
-            "errcheck",
-            "gosimple",
-            "govet",
-            "ineffassign",
-            "staticcheck",
-            "structcheck",
-            "typecheck",
-            "unused",
-            "varcheck",
-            "gofmt",
-            "goimports",
-            "nestif",
-            "ifshort",
             "asciicheck",
+            "errcheck",
             "exhaustive",
             "exportloopref",
             "forbidigo",
             "gocyclo",
             "gofmt",
             "goimports",
-            "ifshort",
+            "gosimple",
+            "govet",
+            "ineffassign",
             "makezero",
             "misspell",
             "nakedret",
@@ -41,10 +36,18 @@
             "nilerr",
             "nlreturn",
             "nolintlint",
+            "staticcheck",
             "testpackage",
+            "typecheck",
             "unconvert",
+            "unused",
             "wastedassign",
             "whitespace"
         ]
+    },
+    "linters-settings": {
+        "errcheck": {
+            "check-blank": true
+        }
     }
 }

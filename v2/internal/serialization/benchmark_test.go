@@ -15,7 +15,7 @@ import (
 )
 
 func BenchmarkEncode(b *testing.B) {
-	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+	os.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8082")
 	defer os.Unsetenv("KP_SCHEMA_REGISTRY_ENDPOINT")
 	client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
 	assert.NoError(b, err)

@@ -25,7 +25,7 @@ type BenchmarkMessage struct {
 func BenchmarkProducer(b *testing.B) {
 	cfg := config.KPConfig{
 		KafkaConfig:          config.Kafka{BootstrapServers: "localhost"},
-		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"},
+		SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8082"},
 	}
 
 	kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
@@ -34,7 +34,7 @@ func BenchmarkProducer(b *testing.B) {
 
 	confluentProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
 	assert.NoError(b, err)
-	client, err := schemaregistry.NewClient(schemaregistry.NewConfig("http://localhost:8081"))
+	client, err := schemaregistry.NewClient(schemaregistry.NewConfig("http://localhost:8082"))
 	assert.NoError(b, err)
 	ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
 	assert.NoError(b, err)

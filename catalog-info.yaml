@@ -3,12 +3,55 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: kp
-  description: Library for handing Kafka messages with retries
+  description: The kp library
   annotations:
     github.com/project-slug: honestbank/kp
+    github.com/team-slug: honestbank/backend-engineers
     sonarqube.org/project-key: honestbank_kp
   tags:
+    - idempotent:false
     - language:golang
+    - stateless:false
+  links:
+    - title: Dashboard
+      url: https://grafana.com
+      icon: dashboard
+    - title: Design Document
+      url: https://honestbank.github.io/kp/
+      icon: menubook
+    - title: Runbook
+      url: https://honestbank.github.io/kp/
+      icon: help
+spec:
+  type: library
+  lifecycle: production
+  owner: group:spend-squad
+  dependsOn:
+    - component:backoff-policy
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kp-v2
+  description: The kp-v2 library
+  annotations:
+    github.com/project-slug: honestbank/kp
+    github.com/team-slug: honestbank/backend-engineers
+    sonarqube.org/project-key: honestbank_kp
+  tags:
+    - idempotent:false
+    - language:golang
+    - stateless:false
+  links:
+    - title: Dashboard
+      url: https://grafana.com
+      icon: dashboard
+    - title: Design Document
+      url: https://honestbank.github.io/kp/
+      icon: menubook
+    - title: Runbook
+      url: https://honestbank.github.io/kp/
+      icon: help
 spec:
   type: library
   lifecycle: production

@@ -1,0 +1,20 @@
+{
+  "squad_name": "spend-squad",
+  "dashboard": "https://grafana.com",
+  "design_document": "https://honestbank.github.io/kp/",
+  "runbook": "https://honestbank.github.io/kp/",
+  "manual_dependencies": [],
+  "type": "library",
+  "lifecycle": "production",
+  "manual_service_names": [
+    "kp",
+    "kp-v2"
+  ],
+  "example-service-name": {
+    "tags" : [
+      "language:golang",
+      "idempotent:false",
+      "stateless:false"
+    ]
+  }
+}

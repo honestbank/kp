@@ -2,6 +2,7 @@ package kp
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -74,7 +75,9 @@ func (k *KP) Start(ctx context.Context) error {
 	wg.Add(1)
 
 	go func() {
-		_ = CreateConsumerSession(k, wg, ctx)
+		if err = CreateConsumerSession(k, wg, ctx); err != nil {
+			log.Println(err)
+		}
 	}() // need to handle the error in V2
 
 	<-k.consumer.GetReady() // Await till the consumer has been set up

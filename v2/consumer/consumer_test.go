@@ -25,13 +25,17 @@ func TestNew(t *testing.T) {
 		BootstrapServers:  "localhost",
 		ConsumerGroupName: "consumer-group-1",
 	}
-	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8081"}
+	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8082"}
 	kpConfig := config.KPConfig{KafkaConfig: kafkaConfig, SchemaRegistryConfig: schemaRegistryConfig}
 	t.Run("can read from kafka", func(t *testing.T) {
-		c, err := consumer.New([]string{"consumer-integration-topic-1"}, kafkaConfig.WithDefaults())
-		assert.NoError(t, err)
 		p1, err := producer.New[MyMsg]("consumer-integration-topic-1", kpConfig)
 		assert.NoError(t, err)
+		err = p1.Produce(context.Background(), MyMsg{Time: time.Now().Format(time.RFC3339Nano)})
+		assert.NoError(t, err)
+		time.Sleep(5 * time.Second)
+		c, err := consumer.New([]string{"consumer-integration-topic-1"}, kafkaConfig.WithDefaults())
+		assert.NoError(t, err)
+		time.Sleep(5 * time.Second)
 		shouldContinue, numberOfMessage := true, 0
 		go func() {
 			for shouldContinue {
@@ -54,7 +58,7 @@ func TestNew(t *testing.T) {
 		time.Sleep(time.Millisecond * 1000)
 		shouldContinue = false
 		time.Sleep(time.Millisecond * 500)
-		assert.Equal(t, 3, numberOfMessage)
+		assert.Equal(t, 4, numberOfMessage)
 	})
 	t.Run("can read from multiple topics", func(t *testing.T) {
 		cfg := kafkaConfig.WithDefaults()
@@ -100,7 +104,7 @@ func TestNew(t *testing.T) {
 	})
 }
 func setup() {
-	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}}
+	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8082"}}
 	c, err := kafka.NewAdminClient(config.GetKafkaConfig(cfg.KafkaConfig))
 	if err != nil {
 		panic(err)

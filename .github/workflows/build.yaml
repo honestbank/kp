@@ -1,64 +1,129 @@
+# DO NOT CHANGE. This file is being managed from a central repository
+# To know more simply visit https://github.com/honestbank/.github/blob/main/docs/about.md
+
 name: go-tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build:
-    name: go-tests
+  get-go-version:
+    name: Get Go Version
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: [ "1.18" ]
+    outputs:
+      go_version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ENGINEERING_GITHUB_PERSONAL_ACCESS_TOKEN }}
+
+      - name: Get Go Version from go.mod
+        id: get-version
+        run: |
+          # Extract the Go version from go.mod
+          GO_VERSION=$(grep -oP '^go \K[0-9]+\.[0-9]+' go.mod)
+          echo "Go Version: $GO_VERSION"
+          echo "version=$GO_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check Go Version
+        run: |
+          echo "Current version in go.mod is: ${{ steps.get-version.outputs.version }}"
+
+  tests:
+    name: go-tests
+    needs: [ get-go-version]
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: ${{ needs.get-go-version.outputs.go_version }}
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: mocks
-        run: make generate
+      - name: Configure ssh-key for private modules
+        env:
+          SSH_KEY: ${{ secrets.ENGINEERING_SSH_KEY }}
+        run: mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
 
-      - name: Setup go modules
-        run: go clean -modcache;go mod tidy; go mod download; go mod verify;
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
-          args: --timeout=5m --modules-download-mode=readonly
-          skip-pkg-cache: true
-          skip-build-cache: true
+      - name: generate
+        run: make generate && go mod tidy
 
       - name: docker-compose
         run: docker compose up -d
-      - name: wait for kafka
-        run: |
-          wget https://downloads.apache.org/kafka/3.6.0/kafka_2.13-3.6.0.tgz
-          tar -xzf kafka_2.13-3.6.0.tgz
-          ./kafka_2.13-3.6.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-          ./kafka_2.13-3.6.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
       - run: sleep 10
+
+      - name: Test
+        run: |
+          go test -race ./...
+
+          echo "Looking for other versions of the SDK"
+          directories=$(find . -type d -name "v*" -exec test -e "{}/go.mod" \; -print)
+          for dir in $directories; do
+            echo "Running tests for $dir"
+            cd "$dir" || continue
+            go test --race ./...
+            cd - > /dev/null
+          done
+
+  integration-tests:
+    name: integration-tests
+    needs: [ get-go-version ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ needs.get-go-version.outputs.go_version }}
+        id: go
+
+      - name: Start docker containers for integration tests
+        run: docker compose -f docker-compose.integration.yaml up -d
+
+      - name: Configure ssh-key for private modules
+        env:
+          SSH_KEY: ${{ secrets.ENGINEERING_SSH_KEY }}
+        run: mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      - name: Setup go modules
+        run: go mod tidy
+
+      - name: docker-compose
+        run: docker compose up -d
+
+      - run: sleep 10
+
       - name: Test and generate code coverage
-        run: go test -v -race --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
-      - run: docker compose down
-      - run: docker compose -f ./v2/docker-compose.yaml up -d
-      - name: wait for kafka
         run: |
-          ./kafka_2.13-3.6.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-          ./kafka_2.13-3.6.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-      - run: sleep 10
-      - run: cd v2 && go test -v --tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
-      - run: tail -n +2 v2/coverage.txt >> coverage.txt && rm v2/coverage.txt
+          go test -tags=integration_test -coverprofile=coverage.txt -covermode=atomic ./...
+
+          echo "Looking for other versions of the SDK"
+          directories=$(find . -type d -name "v*" -exec test -e "{}/go.mod" \; -print)
+          for dir in $directories; do
+            echo "Running integration tests for $dir"
+            cd "$dir" || continue
+            go test -tags=integration_test -coverprofile=coverage.out -covermode=atomic ./...
+            if [ -f coverage.out ]; then
+              echo "Concatenating coverage report"
+              tail -n +2 coverage.out >> ../coverage.txt
+              rm coverage.out
+            fi
+            cd - > /dev/null
+          done
 
       - name: sonarcloud-scan
         uses: sonarsource/sonarcloud-github-action@master
@@ -67,68 +132,59 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
-      - name: npm-build
-        run: cd docs && npm ci && npm run build
-
-  trivy-scan:
-    name: trivy-scan
+  lint:
+    name: golangci-lint
+    needs: [ get-go-version ]
     runs-on: ubuntu-latest
     steps:
       - name: Set up Golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.18"
+          go-version: ${{ needs.get-go-version.outputs.go_version }}
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure ssh-key for private modules
         env:
           SSH_KEY: ${{ secrets.ENGINEERING_SSH_KEY }}
-        run: |
-          mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
+        run: mkdir -p ~/.ssh; echo "$SSH_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; git config --global url."git@github.com:".insteadOf "https://github.com/"
 
-      - name: mocks
-        run: make generate
-      - name: Setup go modules
-        run: go clean -modcache;go mod tidy; go mod download; go mod verify; go mod vendor;
+      - name: generate
+        run: make generate && go mod tidy
 
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@master
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
         with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL'
-          skip-dirs: "docs"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: 'trivy-results.sarif'
+          version: v1.59.0
+          args: --timeout=5m --modules-download-mode=readonly
+          skip-pkg-cache: true
+          skip-build-cache: true
+          fetch-depth: 0
 
   release:
     name: semantic-release
     runs-on: ubuntu-latest
-    needs: [ build, trivy-scan ]
+    needs: [ tests, integration-tests, lint ]
     steps:
       - name: Set up Golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.18"
+          go-version: ${{ needs.get-go-version.outputs.go_version }}
         id: go
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: release
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ENGINEERING_GITHUB_PERSONAL_ACCESS_TOKEN }}
         with:
-          semantic_version: 18
+          semantic_version: 19
           extra_plugins: |
             @semantic-release/git@10.0.1
             @semantic-release/exec@6.0.2

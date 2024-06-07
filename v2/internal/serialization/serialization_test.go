@@ -40,7 +40,7 @@ func TestSerialization(t *testing.T) {
 		assert.Equal(t, 100, msg.Count)
 	})
 	t.Run("matches with confluent serializer", func(t *testing.T) {
-		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8081")
+		t.Setenv("KP_SCHEMA_REGISTRY_ENDPOINT", "http://localhost:8082")
 
 		client, err := schemaregistry.NewClient(schemaregistry.NewConfig(os.Getenv("KP_SCHEMA_REGISTRY_ENDPOINT")))
 		assert.NoError(t, err)

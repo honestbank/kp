@@ -37,7 +37,7 @@ func (m MyMw) Process(ctx context.Context, item *kafka.Message, next func(ctx co
 
 func TestKP(t *testing.T) {
 	kafkaCfg := config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "integration-tests"}
-	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8081"}
+	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8082"}
 	c, err := kafka.NewAdminClient(config.GetKafkaConfig(config.Kafka{BootstrapServers: "localhost"}))
 	assert.NoError(t, err)
 	_, err = c.CreateTopics(context.Background(), []kafka.TopicSpecification{{Topic: "kp-topic", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-retry", ReplicationFactor: 1, NumPartitions: 1}, {Topic: "kp-topic-dlt", ReplicationFactor: 1, NumPartitions: 1}})

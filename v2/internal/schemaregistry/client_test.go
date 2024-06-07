@@ -17,6 +17,6 @@ type BenchmarkMessage struct {
 }
 
 func TestPublish(t *testing.T) {
-	_, err := schemaregistry.Publish[BenchmarkMessage]("topic-kp", config.SchemaRegistry{Endpoint: "http://localhost:8081"})
+	_, err := schemaregistry.Publish[BenchmarkMessage]("topic-kp", config.SchemaRegistry{Endpoint: "http://localhost:8082"})
 	assert.NoError(t, err)
 }

@@ -32,7 +32,7 @@ func ExampleNew() {
 			ConsumerGroupName: "example-tests",
 		},
 		SchemaRegistryConfig: config.SchemaRegistry{
-			Endpoint: "http://localhost:8081",
+			Endpoint: "http://localhost:8082",
 		},
 	}
 
@@ -70,7 +70,7 @@ func ExampleNew() {
 }
 
 func setup() {
-	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8081"}}
+	cfg := config.KPConfig{KafkaConfig: config.Kafka{BootstrapServers: "localhost"}, SchemaRegistryConfig: config.SchemaRegistry{Endpoint: "http://localhost:8082"}}
 	c, err := kafka.NewAdminClient(config.GetKafkaConfig(cfg.KafkaConfig))
 	if err != nil {
 		panic(err)

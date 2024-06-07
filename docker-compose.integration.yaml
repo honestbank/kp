@@ -61,3 +61,8 @@ services:
     image: oittaa/gcp-storage-emulator:latest
     ports:
       - "8080:8080"
+
+  push_gateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"

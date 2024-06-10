@@ -57,11 +57,51 @@ services:
       SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8082"
     ports:
       - 8082:8082
+  wiremock:
+    container_name: wiremock
+    hostname: wiremock
+    ports:
+      - "8085:8080"
+    image: wiremock/wiremock
+    volumes:
+      - ./wiremock/stubs:/home/wiremock
   gcs:
     image: oittaa/gcp-storage-emulator:latest
     ports:
       - "8080:8080"
-
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    hostname: kafdrop
+    restart: "always"
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:19092"
+    depends_on:
+      - "kafka"
+  s3:
+    image: adobe/s3mock
+    container_name: s3mock
+    environment:
+      - initialBuckets=bucket1
+      - root=containers3root
+      - debug=true
+    ports:
+      - 9090:9090
+  sftp:
+    container_name: sftp
+    image: atmoz/sftp
+    volumes:
+      - ./integration/sftp:/home/foo/upload
+    ports:
+      - "2222:22"
+    command: foo:pass:1001
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes --requirepass "redis"
+    ports:
+      - "6379:6379"
   push_gateway:
     image: prom/pushgateway:latest
     ports:

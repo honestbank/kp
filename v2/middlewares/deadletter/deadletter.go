@@ -14,8 +14,9 @@ type deadletter struct {
 	onProduceErrors func(err error)
 	threshold       int
 }
+
 type Producer interface {
-	ProduceRaw(message *kafka.Message) error
+	Produce(ctx context.Context, message *kafka.Message) error
 }
 
 func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
@@ -26,7 +27,7 @@ func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(
 	if retrycounter.GetCount(item) < r.threshold {
 		return err
 	}
-	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
+	err = r.producer.Produce(ctx, &kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 	if err != nil {
 		r.onProduceErrors(err)
 	}

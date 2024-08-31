@@ -35,6 +35,12 @@ func (c consumer) Commit(message *kafka.Message) error {
 	return err
 }
 
+func (c consumer) Stop() error {
+	err := c.kakfaConsumer.Close()
+
+	return err
+}
+
 func New(topics []string, cfg config.Kafka) (Consumer, error) {
 	kafkaConfig := config.GetKafkaConsumerConfig(cfg)
 	_ = kafkaConfig.SetKey("enable.auto.commit", false)

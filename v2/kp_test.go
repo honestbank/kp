@@ -47,7 +47,7 @@ func TestKP(t *testing.T) {
 	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
 	p.Flush()
 	assert.NoError(t, err)
-	kp := v2.New[kafka.Message]()
+	kp := v2.New[kafka.Message](nil)
 	messageProcessCount := 0
 	const retryCount = 10
 	retryTopicProducer, err := producer.New[UserLoggedInEvent]("kp-topic-retry", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
@@ -69,8 +69,8 @@ func TestKP(t *testing.T) {
 	}()
 	err = kp.AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(MyMw{}).
-		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
-		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, retryCount, func(err error) {})).
+		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer)).
+		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, retryCount)).
 		Run(func(ctx context.Context, message *kafka.Message) error {
 			fmt.Printf("%v\n", message)
 			messageProcessCount++

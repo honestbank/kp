@@ -35,7 +35,7 @@ func newProducer(cb func(item *kafka.Message) error) producer.Producer[any] {
 
 func TestRetry_Process(t *testing.T) {
 	t.Run("if message processing succeeds, it returns nil without retrying", func(t *testing.T) {
-		middleware := retry.NewRetryMiddleware(nil, nil)
+		middleware := retry.NewRetryMiddleware(nil)
 		assert.NotPanics(t, func() {
 			err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 				return nil
@@ -47,9 +47,7 @@ func TestRetry_Process(t *testing.T) {
 	t.Run("producing message works and increments the retry count", func(t *testing.T) {
 		middleware := retry.NewRetryMiddleware(newProducer(func(item *kafka.Message) error {
 			return nil
-		}), func(err error) {
-			t.FailNow()
-		})
+		}))
 		msg := &kafka.Message{}
 		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 0, retrycounter.GetCount(item))
@@ -66,17 +64,14 @@ func TestRetry_Process(t *testing.T) {
 	})
 
 	t.Run("if producing fails while retrying, we get a callback", func(t *testing.T) {
-		called := false
 		middleware := retry.NewRetryMiddleware(newProducer(func(item *kafka.Message) error {
 			return errors.New("some error")
-		}), func(err error) {
-			called = true
-		})
+		}))
 		msg := &kafka.Message{}
-		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
+		err := middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 0, retrycounter.GetCount(item))
 			return errors.New("random error")
 		})
-		assert.True(t, called)
+		assert.Error(t, err)
 	})
 }

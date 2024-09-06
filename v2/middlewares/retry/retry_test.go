@@ -14,6 +14,7 @@ import (
 )
 
 type producerMock struct {
+	topic      string
 	produceRaw func(message *kafka.Message) error
 }
 
@@ -29,8 +30,10 @@ func (r producerMock) ProduceRaw(message *kafka.Message) error {
 	return r.produceRaw(message)
 }
 
+func (r producerMock) GetTopic() string { return r.topic }
+
 func newProducer(cb func(item *kafka.Message) error) producer.Producer[any] {
-	return producerMock{produceRaw: cb}
+	return producerMock{produceRaw: cb, topic: "mock-topic"}
 }
 
 func TestRetry_Process(t *testing.T) {

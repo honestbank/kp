@@ -42,6 +42,10 @@ func (p producer[BodyType]) Flush() error {
 	return nil
 }
 
+func (p producer[BodyType]) GetTopic() string {
+	return p.topic
+}
+
 func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
 	return p.k.ProduceRaw(message)
 }

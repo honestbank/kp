@@ -26,6 +26,10 @@ func (u untypedProducer) Flush() error {
 	return nil
 }
 
+func (u untypedProducer) GetTopic() string {
+	return u.topic
+}
+
 func NewUntyped(topic string, cfg config.Kafka) (UntypedProducer, error) {
 	p, err := kafka.NewProducer(config.GetKafkaConfig(cfg))
 	if err != nil {

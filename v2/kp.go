@@ -11,11 +11,11 @@ type Processor[MessageType any] func(ctx context.Context, item *MessageType) err
 
 type kp[MessageType any] struct {
 	chain          middleware.Processor[*MessageType, error]
-	shouldContinue int32
+	shouldContinue *atomic.Bool
 }
 
 func (t *kp[MessageType]) getShouldContinue() bool {
-	return atomic.LoadInt32(&t.shouldContinue) > 0
+	return t.shouldContinue.Load()
 }
 
 func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*MessageType, error]) MessageProcessor[MessageType] {
@@ -25,7 +25,7 @@ func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*Messag
 }
 
 func (t *kp[MessageType]) Stop() {
-	atomic.StoreInt32(&t.shouldContinue, 0)
+	t.shouldContinue.Store(false)
 }
 
 func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
@@ -44,6 +44,13 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 func New[MessageType any]() MessageProcessor[MessageType] {
 	return &kp[MessageType]{
 		chain:          middleware.New[*MessageType, error](),
-		shouldContinue: 1,
+		shouldContinue: getAtomicBoolean(true),
 	}
+}
+
+func getAtomicBoolean(value bool) *atomic.Bool {
+	v := atomic.Bool{}
+	v.Store(value)
+
+	return &v
 }

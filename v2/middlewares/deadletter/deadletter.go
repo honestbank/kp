@@ -10,9 +10,8 @@ import (
 )
 
 type deadletter struct {
-	producer        Producer
-	onProduceErrors func(err error)
-	threshold       int
+	producer  Producer
+	threshold int
 }
 type Producer interface {
 	ProduceRaw(message *kafka.Message) error
@@ -26,14 +25,10 @@ func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(
 	if retrycounter.GetCount(item) < r.threshold {
 		return err
 	}
-	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
-	if err != nil {
-		r.onProduceErrors(err)
-	}
 
-	return nil
+	return r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 }
 
-func NewDeadletterMiddleware(producer Producer, threshold int, onProduceErrors func(error)) middlewares.KPMiddleware[*kafka.Message] {
-	return deadletter{onProduceErrors: onProduceErrors, producer: producer, threshold: threshold}
+func NewDeadletterMiddleware(producer Producer, threshold int) middlewares.KPMiddleware[*kafka.Message] {
+	return deadletter{producer: producer, threshold: threshold}
 }

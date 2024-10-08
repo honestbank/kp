@@ -10,8 +10,7 @@ import (
 )
 
 type retry struct {
-	producer        Producer
-	onProduceErrors func(err error)
+	producer Producer
 }
 
 type Producer interface {
@@ -24,14 +23,10 @@ func (r retry) Process(ctx context.Context, item *kafka.Message, next func(ctx c
 		return nil
 	}
 	retrycounter.SetCount(item, retrycounter.GetCount(item)+1)
-	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
-	if err != nil {
-		r.onProduceErrors(err)
-	}
 
-	return nil
+	return r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 }
 
-func NewRetryMiddleware(producer Producer, onProduceErrors func(error)) middlewares.KPMiddleware[*kafka.Message] {
-	return retry{onProduceErrors: onProduceErrors, producer: producer}
+func NewRetryMiddleware(producer Producer) middlewares.KPMiddleware[*kafka.Message] {
+	return retry{producer: producer}
 }

@@ -22,9 +22,13 @@ func (c consumerMiddleware) Process(ctx context.Context, item *kafka.Message, ne
 	if msg == nil {
 		return nil
 	}
-	defer c.consumer.Commit(msg)
 
-	return next(ctx, msg)
+	err := next(ctx, msg)
+	if err != nil {
+		return err
+	}
+
+	return c.consumer.Commit(msg)
 }
 
 func NewConsumerMiddleware(consumer consumer.Consumer) middlewares.KPMiddleware[*kafka.Message] {

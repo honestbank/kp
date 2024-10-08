@@ -44,7 +44,7 @@ func ExampleNew() {
 	if err != nil {
 		panic(err)
 	}
-	processor := v2.New[kafka.Message]()
+	processor := v2.New[kafka.Message](nil)
 	kafkaConsumer, err := consumer2.New([]string{"user-logged-in", "user-logged-in-rewards-processor-retry"}, kpConfig.KafkaConfig.WithDefaults())
 	if err != nil {
 		panic(err)
@@ -56,8 +56,8 @@ func ExampleNew() {
 	err = processor.
 		AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(retry_count.NewRetryCountMiddleware()).
-		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
-		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, 3, func(err error) {})).
+		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer)).
+		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, 3)).
 		Run(func(ctx context.Context, ev *kafka.Message) error {
 			val, _ := serialization.Decode[UserLoggedInEvent](ev.Value)
 			fmt.Printf("%s-%d|", val.UserID, retry_count.FromContext(ctx))

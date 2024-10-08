@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 ---
 # Metrics
 The metrics middleware is a middleware for the KP library that tracks various metrics about the message processing, such as the duration of each operation and the number of successes and failures. These metrics are collected using the Prometheus library and can be pushed to a Prometheus gateway to be stored and visualized.

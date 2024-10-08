@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 ---
 # graceful shutdown
 The `gracefulshutdown` middleware is designed to handle the `syscall.SIGINT`, `syscall.SIGTERM`, `syscall.SIGHUP`, and `syscall.SIGQUIT` signals gracefully, by allowing you to stop your processor in a controlled manner.

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 # Consumer
 The consumer middleware is responsible for populating the chain with messages from the Kafka topic(s). Consumer middleware retrieves a message from the Kafka topic using the Consumer interface and passes it to the next middleware in the chain.

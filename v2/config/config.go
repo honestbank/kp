@@ -28,7 +28,7 @@ func (s Kafka) WithDefaults() Kafka {
 		SecurityProtocol:         s.SecurityProtocol,
 		Username:                 s.Username,
 		Password:                 s.Password,
-		ConsumerSessionTimeoutMs: defaultIfNil(s.ConsumerSessionTimeoutMs, 6000),
+		ConsumerSessionTimeoutMs: defaultIfNil(s.ConsumerSessionTimeoutMs, 30000),
 		ConsumerAutoOffsetReset:  defaultIfNil(s.ConsumerAutoOffsetReset, "earliest"),
 		ClientID:                 defaultIfNil(s.ClientID, "rdkafka"),
 		Debug:                    s.Debug,

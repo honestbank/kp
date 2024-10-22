@@ -2,6 +2,7 @@ package producer
 
 import (
 	"context"
+	"github.com/honestbank/kp/v2/internal/middleware"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
@@ -33,7 +34,7 @@ func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error
 	}
 	tracing.InjectTraceHeaders(ctx, msg)
 
-	return p.k.ProduceRaw(msg)
+	return p.k.Produce(ctx, msg)
 }
 
 func (p producer[BodyType]) Flush() error {
@@ -42,8 +43,8 @@ func (p producer[BodyType]) Flush() error {
 	return nil
 }
 
-func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
-	return p.k.ProduceRaw(message)
+func (p producer[BodyType]) SetMiddlewares(middlewares []middleware.Middleware[*kafka.Message, error]) {
+	p.k.SetMiddlewares(middlewares)
 }
 
 func New[MessageType any](topic string, cfg config.KPConfig) (Producer[MessageType], error) {

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 9
 ---
+# Deadletter
 The deadletter middleware is used to send messages that have failed processing to a deadletter topic after a certain number of retries. This can be useful for identifying and debugging messages that are consistently causing processing errors.
 
 To use the deadletter middleware, you will need to provide a producer interface that can be used to send messages to the deadletter topic. You will also need to specify a threshold for the number of retries before a message is sent to the deadletter topic. Optionally, you can also provide a function that will be called whenever there is an error while producing a message to the deadletter topic.

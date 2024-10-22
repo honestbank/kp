@@ -1,7 +1,7 @@
 ---
 sidebar_position: 8
 ---
-
+# Retry
 The retry middleware is a utility middleware that automatically retries processing a message in case of failure. When a message processing fails, the middleware produces the message to a retry topic. The middleware uses the `Producer` interface to produce the message, which means that the user can choose any Kafka client that implements this interface to produce the message.
 
 :::tip

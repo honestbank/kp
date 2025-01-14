@@ -105,7 +105,7 @@ jobs:
       - name: docker-compose
         run: docker compose up -d
 
-      - run: sleep 10
+      - run: sleep 30
 
       - name: Test and generate code coverage
         run: |

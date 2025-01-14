@@ -3,6 +3,7 @@ package deadletter_test
 import (
 	"context"
 	"errors"
+	"github.com/honestbank/kp/v2/internal/middleware"
 	"testing"
 
 	"github.com/honestbank/kp/v2/internal/retrycounter"
@@ -18,19 +19,18 @@ type producerMock struct {
 	produceRaw func(message *kafka.Message) error
 }
 
+func (r producerMock) SetMiddlewares(middlewares []middleware.Middleware[*kafka.Message, error]) {
+}
+
 func (r producerMock) Flush() error {
 	return nil
 }
 
-func (r producerMock) Produce(context context.Context, message any) error {
-	return nil
-}
-
-func (r producerMock) ProduceRaw(message *kafka.Message) error {
+func (r producerMock) Produce(context context.Context, message *kafka.Message) error {
 	return r.produceRaw(message)
 }
 
-func newProducer(cb func(item *kafka.Message) error) producer.Producer[any] {
+func newProducer(cb func(item *kafka.Message) error) producer.UntypedProducer {
 	return producerMock{produceRaw: cb}
 }
 

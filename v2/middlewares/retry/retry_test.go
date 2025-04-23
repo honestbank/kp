@@ -29,6 +29,8 @@ func (r producerMock) ProduceRaw(message *kafka.Message) error {
 	return r.produceRaw(message)
 }
 
+func (r producerMock) Events() <-chan kafka.Event { return nil }
+
 func newProducer(cb func(item *kafka.Message) error) producer.Producer[any] {
 	return producerMock{produceRaw: cb}
 }

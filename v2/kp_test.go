@@ -45,11 +45,12 @@ func handleDelivery(ctx context.Context, deliveryChan <-chan kafka.Event) {
 			case kafka.Error:
 				fmt.Println("Kafka error:", ev)
 			case *kafka.Message:
+				tp := ev.TopicPartition
 				if ev.TopicPartition.Error != nil {
-					fmt.Println("Kafka message delivery failed:", ev.TopicPartition)
+					fmt.Println("Kafka message delivery failed:", tp)
 				}
 				if ev.TopicPartition.Error == nil {
-					fmt.Println("Kafka message delivered:", ev.TopicPartition)
+					fmt.Println("Kafka message delivered:", tp)
 				}
 			default:
 				fmt.Println("Unknown delivery event:", e)

@@ -11,9 +11,11 @@ repos:
       - id: detect-aws-credentials
         args: [ '--allow-missing-credentials' ]
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.52.2
+    rev: v1.64.4
     hooks:
       - id: golangci-lint
+        stages: [pre-commit]
+        args: ["--timeout=10m"]
   - repo: https://github.com/TekWizely/pre-commit-golang
     rev: v1.0.0-rc.1
     hooks:

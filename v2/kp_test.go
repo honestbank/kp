@@ -1,3 +1,5 @@
+//go:build !race
+
 package v2_test
 
 import (

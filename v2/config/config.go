@@ -17,6 +17,7 @@ type Kafka struct {
 	ConsumerSessionTimeoutMs *int
 	ConsumerAutoOffsetReset  *string
 	ClientID                 *string
+	MaxMessageBytes          *int
 	Debug                    *string
 }
 
@@ -59,6 +60,7 @@ func GetKafkaConfig(kafkaConfig Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "sasl.password", kafkaConfig.Password)
 	hydrateIfNotNil(cfg, "debug", kafkaConfig.Debug)
 	hydrateIfNotNil(cfg, "client.id", kafkaConfig.ClientID)
+	hydrateIfNotNil(cfg, "message.max.bytes", kafkaConfig.MaxMessageBytes)
 
 	return cfg
 }

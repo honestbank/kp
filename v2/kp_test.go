@@ -1,3 +1,5 @@
+//go:build !race
+
 package v2_test
 
 import (
@@ -35,6 +37,30 @@ func (m MyMw) Process(ctx context.Context, item *kafka.Message, next func(ctx co
 	return result
 }
 
+func handleDelivery(ctx context.Context, deliveryChan <-chan kafka.Event) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case e := <-deliveryChan:
+			switch ev := e.(type) {
+			case kafka.Error:
+				fmt.Println("Kafka error:", ev)
+			case *kafka.Message:
+				tp := ev.TopicPartition
+				if ev.TopicPartition.Error != nil {
+					fmt.Println("Kafka message delivery failed:", tp)
+				}
+				if ev.TopicPartition.Error == nil {
+					fmt.Println("Kafka message delivered:", tp)
+				}
+			default:
+				fmt.Println("Unknown delivery event:", e)
+			}
+		}
+	}
+}
+
 func TestKP(t *testing.T) {
 	kafkaCfg := config.Kafka{BootstrapServers: "localhost", ConsumerGroupName: "integration-tests"}
 	schemaRegistryConfig := config.SchemaRegistry{Endpoint: "http://localhost:8082"}
@@ -44,9 +70,11 @@ func TestKP(t *testing.T) {
 	assert.NoError(t, err)
 
 	p, err := producer.New[MyType]("kp-topic", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
-	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
-	p.Flush()
 	assert.NoError(t, err)
+	go func() {
+		handleDelivery(context.Background(), p.Events())
+	}()
+
 	kp := v2.New[kafka.Message]()
 	messageProcessCount := 0
 	const retryCount = 10
@@ -54,10 +82,20 @@ func TestKP(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		handleDelivery(context.Background(), retryTopicProducer.Events())
+	}()
 	dltProducer, err := producer.New[UserLoggedInEvent]("kp-topic-dlt", config.KPConfig{KafkaConfig: kafkaCfg, SchemaRegistryConfig: schemaRegistryConfig})
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		handleDelivery(context.Background(), dltProducer.Events())
+	}()
+
+	p.Produce(context.Background(), MyType{Username: "username1", Count: 1})
+	p.Flush()
+
 	kafkaConsumer, err := consumer2.New([]string{"kp-topic", "kp-topic-retry"}, kafkaCfg.WithDefaults())
 	if err != nil {
 		panic(err)

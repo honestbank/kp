@@ -4,7 +4,7 @@
 name: go-tests
 
 permissions:
-  contents: read
+  contents: write
 on:
   push:
     branches: [main]

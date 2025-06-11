@@ -2,7 +2,6 @@ package producer
 
 import (
 	"context"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"github.com/honestbank/kp/v2/config"
@@ -10,6 +9,11 @@ import (
 	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/internal/tracing"
 )
+
+type contextKey string
+
+// MessageKey can be used for passing keys before [this](https://github.com/honestbank/kp/issues/81) gets implemented.
+const MessageKey contextKey = "messageKey"
 
 type producer[BodyType any] struct {
 	schemaID int
@@ -30,6 +34,9 @@ func (p producer[BodyType]) Produce(ctx context.Context, message BodyType) error
 	msg := &kafka.Message{
 		TopicPartition: partition,
 		Value:          value,
+	}
+	if val := ctx.Value(MessageKey); val != nil {
+		msg.Key = val.([]byte)
 	}
 	tracing.InjectTraceHeaders(ctx, msg)
 

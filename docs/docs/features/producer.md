@@ -44,3 +44,23 @@ func getConfig() any {
     return nil // return your config
 }
 ```
+
+If you need to produce Kafka messages with keys, you can use context to pass `MessageKey`:
+
+```go
+package main
+
+import (
+	"context"
+	"github.com/honestbank/kp/v2/producer"
+)
+
+
+type UserLoggedIn struct {
+	UserID string `avro:"user_id"`
+}
+
+func doSomething(p producer.Producer[UserLoggedIn]) error {
+	return p.Produce(context.WithValue(context.Background(), producer.MessageKey, []byte("my-key")), UserLoggedIn{})
+}
+```

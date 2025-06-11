@@ -5,9 +5,8 @@ package producer_test
 import (
 	"context"
 	"encoding/binary"
+	"strconv"
 	"testing"
-
-	"github.com/honestbank/kp/v2/config"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
@@ -15,6 +14,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/avro"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/honestbank/kp/v2/config"
 	"github.com/honestbank/kp/v2/internal/serialization"
 	"github.com/honestbank/kp/v2/producer"
 )
@@ -105,6 +105,19 @@ func TestNew(t *testing.T) {
 
 		for i := 0; i < 25000; i++ {
 			err := kp.Produce(context.Background(), BenchmarkMessage{
+				Body:  "hello-world",
+				Count: i,
+			})
+			assert.NoError(t, err)
+		}
+	})
+	t.Run("produce through kp with keys", func(t *testing.T) {
+		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
+		assert.NoError(t, err)
+		defer kp.Flush()
+
+		for i := 0; i < 25000; i++ {
+			err := kp.Produce(context.WithValue(context.Background(), producer.MessageKey, []byte(strconv.Itoa(i))), BenchmarkMessage{
 				Body:  "hello-world",
 				Count: i,
 			})

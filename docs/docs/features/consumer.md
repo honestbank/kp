@@ -51,6 +51,13 @@ func getConfig() any {
 	return nil // return your config
 }
 ```
+
+### Default Configuration Values {#default_values}
+The consumer sets these default when calling `func (c config.Kafka) WithDefaults()` method
+- `ConsumerSessionTimeoutMs` is set to 30s. Setting this value too low can cause false re-balance and setting it too high will add delays between deployments.
+- `ConsumerAutoOffsetReset` is set to earliest. This means the first deployment of the consumer, it'll start consuming messages from the beginning of the topic (or from start). If this value is set to `latest`, it'll only consume messages that were produced after this consumer is deployed.
+- `ClientID` is set to `rdkafka` this value is used to debug issues and generally left to the default.
+
 ### Notes {#notes}
 - If the `GetMessage()` method returns nil, it could mean that there are no messages available or that an error occurred, generally errors are recovered internally by confluent client.
 - The `Commit()` method should only be called after you have successfully processed the message and are ready to commit it to the Kafka topic.

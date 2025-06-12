@@ -1,6 +1,6 @@
 module github.com/honestbank/kp/v2
 
-go 1.18
+go 1.23
 
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.0.2

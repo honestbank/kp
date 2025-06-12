@@ -1,36 +1,27 @@
 {
-    "run": {
-        "tests": true
-    },
-    "issues":  {
-        "exclude-rules": [
-            {
-                "path": "_test.go",
-                "linters": ["errcheck"]
-            }
-
+    "formatters": {
+        "enable": [
+            "gofmt",
+            "goimports"
         ],
-        "exclude-files": [
-            "graph"
-        ],
-        "exclude-dirs": [
-            ".*/generated/*"
-        ],
-        "exclude-dirs-use-default": true
+        "exclusions": {
+            "generated": "lax",
+            "paths": [
+                "graph",
+                ".*/generated/*",
+                "third_party$",
+                "builtin$",
+                "examples$"
+            ]
+        }
     },
     "linters": {
         "enable": [
             "asciicheck",
             "copyloopvar",
-            "errcheck",
             "exhaustive",
             "forbidigo",
             "gocyclo",
-            "gofmt",
-            "goimports",
-            "gosimple",
-            "govet",
-            "ineffassign",
             "makezero",
             "misspell",
             "nakedret",
@@ -38,18 +29,43 @@
             "nilerr",
             "nlreturn",
             "nolintlint",
-            "staticcheck",
             "testpackage",
-            "typecheck",
             "unconvert",
-            "unused",
             "wastedassign",
             "whitespace"
-        ]
-    },
-    "linters-settings": {
-        "errcheck": {
-            "check-blank": true
+        ],
+        "exclusions": {
+            "generated": "lax",
+            "paths": [
+                "graph",
+                ".*/generated/*",
+                "third_party$",
+                "builtin$",
+                "examples$"
+            ],
+            "presets": [
+                "comments",
+                "common-false-positives",
+                "legacy",
+                "std-error-handling"
+            ],
+            "rules": [
+                {
+                    "linters": [
+                        "errcheck"
+                    ],
+                    "path": "_test.go"
+                }
+            ]
+        },
+        "settings": {
+            "errcheck": {
+                "check-blank": true
+            }
         }
-    }
+    },
+    "run": {
+        "tests": true
+    },
+    "version": "2"
 }

@@ -159,9 +159,9 @@ jobs:
         run: make generate && go mod tidy
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.59.0
+          version: latest
           args: --timeout=5m --modules-download-mode=readonly
           skip-pkg-cache: true
           skip-build-cache: true

@@ -1,6 +1,6 @@
 module github.com/honestbank/kp
 
-go 1.20
+go 1.23.0
 
 require (
 	github.com/Shopify/sarama v1.37.2

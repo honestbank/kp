@@ -85,4 +85,61 @@ func TestRetry_Process(t *testing.T) {
 		})
 		assert.True(t, called)
 	})
+
+	t.Run("if created via builder without optional callbacks, it works the same", func(t *testing.T) {
+		middleware := deadletter.NewBuilder().Build(nil, 2, nil)
+		assert.NotPanics(t, func() {
+			err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+				return nil
+			})
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("if created via builder with optional callbacks, it should trigger the callback", func(t *testing.T) {
+		onSuccessCount := 0
+		onSuccess := func() { onSuccessCount++ }
+		middleware := deadletter.NewBuilder().OnSuccess(onSuccess).Build(nil, 2, nil)
+		assert.NotPanics(t, func() {
+			err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
+				return nil
+			})
+			assert.NoError(t, err)
+		})
+		assert.Equal(t, 1, onSuccessCount)
+	})
+
+	t.Run("it should trigger the retry and deadletter callback", func(t *testing.T) {
+		onRetryCount := 0
+		onRetry := func(error) { onRetryCount++ }
+		onDeadLetterCount := 0
+		onDeadLetter := func(error) { onDeadLetterCount++ }
+		middleware := deadletter.NewBuilder().
+			OnRetry(onRetry).
+			OnDeadLetter(onDeadLetter).
+			Build(newProducer(func(item *kafka.Message) error {
+				return nil
+			}), 2, func(err error) {
+				t.FailNow()
+			})
+		msg := &kafka.Message{}
+		retrycounter.SetCount(msg, 0)
+		err := middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
+			return errors.New("random error")
+		})
+		assert.Error(t, err)
+		assert.Equal(t, 1, onRetryCount)
+		retrycounter.SetCount(msg, 1)
+		err = middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
+			return errors.New("random error")
+		})
+		assert.Error(t, err)
+		assert.Equal(t, 2, onRetryCount)
+		retrycounter.SetCount(msg, 2)
+		err = middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
+			return errors.New("random error")
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 1, onDeadLetterCount)
+	})
 }

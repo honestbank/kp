@@ -16,14 +16,10 @@ type Builder struct {
 }
 
 type deadletter struct {
-	// required
+	optionals       Builder
 	producer        Producer
 	onProduceErrors func(err error)
 	threshold       int
-	// optional
-	onSuccess    func()
-	onRetry      func(err error)
-	onDeadLetter func(err error)
 }
 
 type Producer interface {
@@ -33,14 +29,14 @@ type Producer interface {
 func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
 	err := next(ctx, item)
 	if err == nil {
-		r.onSuccess()
+		r.optionals.onSuccess()
 		return nil
 	}
 	if retrycounter.GetCount(item) < r.threshold {
-		r.onRetry(err)
+		r.optionals.onRetry(err)
 		return err
 	}
-	r.onDeadLetter(err)
+	r.optionals.onDeadLetter(err)
 	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 	if err != nil {
 		r.onProduceErrors(err)
@@ -84,8 +80,6 @@ func (b *Builder) Build(producer Producer, threshold int, onProduceErrors func(e
 		onProduceErrors: onProduceErrors,
 		producer:        producer,
 		threshold:       threshold,
-		onSuccess:       b.onSuccess,
-		onRetry:         b.onRetry,
-		onDeadLetter:    b.onDeadLetter,
+		optionals:       *b,
 	}
 }

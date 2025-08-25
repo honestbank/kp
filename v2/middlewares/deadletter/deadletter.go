@@ -10,16 +10,16 @@ import (
 )
 
 type Builder struct {
-	onSuccess    func()
-	onRetry      func(err error)
-	onDeadLetter func(err error)
+	onSuccess       func()          // called when the next middleware is executed successfully
+	onRetry         func(err error) // called when the next middleware failed, but it didn't reach the maximum retry count
+	onDeadLetter    func(err error) // called when the next middleware failed, and it reached the maximum retry count
+	onProduceErrors func(err error) // called when it failed to produce the dead letter message
 }
 
 type deadletter struct {
-	optionals       Builder
-	producer        Producer
-	onProduceErrors func(err error)
-	threshold       int
+	optionals Builder
+	producer  Producer
+	threshold int
 }
 
 type Producer interface {
@@ -39,14 +39,15 @@ func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(
 	r.optionals.onDeadLetter(err)
 	err = r.producer.ProduceRaw(&kafka.Message{Value: item.Value, Key: item.Key, Headers: item.Headers, Timestamp: item.Timestamp, TimestampType: item.TimestampType, Opaque: item.Opaque})
 	if err != nil {
-		r.onProduceErrors(err)
+		r.optionals.onProduceErrors(err)
 	}
 
 	return nil
 }
 
+// Deprecated: use NewBuilder instead
 func NewDeadletterMiddleware(producer Producer, threshold int, onProduceErrors func(error)) middlewares.KPMiddleware[*kafka.Message] {
-	return NewBuilder().Build(producer, threshold, onProduceErrors)
+	return NewBuilder().OnProduceErrors(onProduceErrors).Build(producer, threshold)
 }
 
 func NewBuilder() *Builder {
@@ -75,11 +76,16 @@ func (b *Builder) OnDeadLetter(f func(err error)) *Builder {
 	return b
 }
 
-func (b *Builder) Build(producer Producer, threshold int, onProduceErrors func(error)) middlewares.KPMiddleware[*kafka.Message] {
+func (b *Builder) OnProduceErrors(f func(err error)) *Builder {
+	b.onProduceErrors = f
+
+	return b
+}
+
+func (b *Builder) Build(producer Producer, threshold int) middlewares.KPMiddleware[*kafka.Message] {
 	return deadletter{
-		onProduceErrors: onProduceErrors,
-		producer:        producer,
-		threshold:       threshold,
-		optionals:       *b,
+		producer:  producer,
+		threshold: threshold,
+		optionals: *b,
 	}
 }

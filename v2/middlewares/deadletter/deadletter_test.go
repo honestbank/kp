@@ -87,7 +87,7 @@ func TestRetry_Process(t *testing.T) {
 	})
 
 	t.Run("if created via builder without optional callbacks, it works the same", func(t *testing.T) {
-		middleware := deadletter.NewBuilder().Build(nil, 2, nil)
+		middleware := deadletter.NewBuilder().Build(nil, 2)
 		assert.NotPanics(t, func() {
 			err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 				return nil
@@ -99,7 +99,7 @@ func TestRetry_Process(t *testing.T) {
 	t.Run("if created via builder with optional callbacks, it should trigger the callback", func(t *testing.T) {
 		onSuccessCount := 0
 		onSuccess := func() { onSuccessCount++ }
-		middleware := deadletter.NewBuilder().OnSuccess(onSuccess).Build(nil, 2, nil)
+		middleware := deadletter.NewBuilder().OnSuccess(onSuccess).Build(nil, 2)
 		assert.NotPanics(t, func() {
 			err := middleware.Process(context.Background(), nil, func(ctx context.Context, item *kafka.Message) error {
 				return nil
@@ -117,11 +117,10 @@ func TestRetry_Process(t *testing.T) {
 		middleware := deadletter.NewBuilder().
 			OnRetry(onRetry).
 			OnDeadLetter(onDeadLetter).
+			OnProduceErrors(func(err error) { t.FailNow() }).
 			Build(newProducer(func(item *kafka.Message) error {
 				return nil
-			}), 2, func(err error) {
-				t.FailNow()
-			})
+			}), 2)
 		msg := &kafka.Message{}
 		retrycounter.SetCount(msg, 0)
 		err := middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {

@@ -8,31 +8,35 @@ type KPConfig struct {
 }
 
 type Kafka struct {
-	ConsumerGroupName        string
-	BootstrapServers         string
-	SaslMechanism            *string
-	SecurityProtocol         *string
-	Username                 *string
-	Password                 *string
-	ConsumerSessionTimeoutMs *int
-	ConsumerAutoOffsetReset  *string
-	ClientID                 *string
-	MaxMessageBytes          *int
-	Debug                    *string
+	ConsumerGroupName           string
+	BootstrapServers            string
+	SaslMechanism               *string
+	SecurityProtocol            *string
+	Username                    *string
+	Password                    *string
+	ConsumerSessionTimeoutMs    *int
+	ConsumerAutoOffsetReset     *string
+	ClientID                    *string
+	MaxMessageBytes             *int
+	SocketKeepaliveEnabled      *bool
+	ConnectionsMaxIdleTimeoutMs *int
+	Debug                       *string
 }
 
 func (s Kafka) WithDefaults() Kafka {
 	return Kafka{
-		ConsumerGroupName:        s.ConsumerGroupName,
-		BootstrapServers:         s.BootstrapServers,
-		SaslMechanism:            s.SaslMechanism,
-		SecurityProtocol:         s.SecurityProtocol,
-		Username:                 s.Username,
-		Password:                 s.Password,
-		ConsumerSessionTimeoutMs: defaultIfNil(s.ConsumerSessionTimeoutMs, 30000),
-		ConsumerAutoOffsetReset:  defaultIfNil(s.ConsumerAutoOffsetReset, "earliest"),
-		ClientID:                 defaultIfNil(s.ClientID, "rdkafka"),
-		Debug:                    s.Debug,
+		ConsumerGroupName:           s.ConsumerGroupName,
+		BootstrapServers:            s.BootstrapServers,
+		SaslMechanism:               s.SaslMechanism,
+		SecurityProtocol:            s.SecurityProtocol,
+		Username:                    s.Username,
+		Password:                    s.Password,
+		ConsumerSessionTimeoutMs:    defaultIfNil(s.ConsumerSessionTimeoutMs, 30000),
+		ConsumerAutoOffsetReset:     defaultIfNil(s.ConsumerAutoOffsetReset, "earliest"),
+		ClientID:                    defaultIfNil(s.ClientID, "rdkafka"),
+		SocketKeepaliveEnabled:      defaultIfNil(s.SocketKeepaliveEnabled, false),      // Default for librdkafka
+		ConnectionsMaxIdleTimeoutMs: defaultIfNil(s.ConnectionsMaxIdleTimeoutMs, 30000), // Default for librdkafka
+		Debug:                       s.Debug,
 	}
 }
 
@@ -61,6 +65,8 @@ func GetKafkaConfig(kafkaConfig Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "debug", kafkaConfig.Debug)
 	hydrateIfNotNil(cfg, "client.id", kafkaConfig.ClientID)
 	hydrateIfNotNil(cfg, "message.max.bytes", kafkaConfig.MaxMessageBytes)
+	hydrateIfNotNil(cfg, "socket.keepalive.enable", kafkaConfig.SocketKeepaliveEnabled)
+	hydrateIfNotNil(cfg, "connections.max.idle.ms", kafkaConfig.ConnectionsMaxIdleTimeoutMs)
 
 	return cfg
 }

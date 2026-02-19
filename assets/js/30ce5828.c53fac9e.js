@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[939],{7078:t=>{t.exports=JSON.parse('{"categoryGeneratedIndex":{"title":"Introduction","slug":"/category/introduction","permalink":"/kp/docs/category/introduction","sidebar":"tutorialSidebar","navigation":{"next":{"title":"Getting Started with KP","permalink":"/kp/docs/introduction/getting-started"}}}}')}}]);

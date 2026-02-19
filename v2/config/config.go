@@ -20,6 +20,7 @@ type Kafka struct {
 	MaxMessageBytes             *int
 	SocketKeepaliveEnabled      *bool
 	ConnectionsMaxIdleTimeoutMs *int
+	MaxPollIntervalMs           *int
 	Debug                       *string
 }
 
@@ -36,6 +37,7 @@ func (s Kafka) WithDefaults() Kafka {
 		ClientID:                    defaultIfNil(s.ClientID, "rdkafka"),
 		SocketKeepaliveEnabled:      defaultIfNil(s.SocketKeepaliveEnabled, false),      // Default for librdkafka
 		ConnectionsMaxIdleTimeoutMs: defaultIfNil(s.ConnectionsMaxIdleTimeoutMs, 30000), // Default for librdkafka
+		MaxPollIntervalMs:           defaultIfNil(s.MaxPollIntervalMs, 30000),           // Default for librdkafka
 		Debug:                       s.Debug,
 	}
 }
@@ -67,6 +69,7 @@ func GetKafkaConfig(kafkaConfig Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "message.max.bytes", kafkaConfig.MaxMessageBytes)
 	hydrateIfNotNil(cfg, "socket.keepalive.enable", kafkaConfig.SocketKeepaliveEnabled)
 	hydrateIfNotNil(cfg, "connections.max.idle.ms", kafkaConfig.ConnectionsMaxIdleTimeoutMs)
+	hydrateIfNotNil(cfg, "max.poll.interval.ms", kafkaConfig.MaxPollIntervalMs)
 
 	return cfg
 }

@@ -2,6 +2,7 @@ package producer
 
 import (
 	"context"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"github.com/honestbank/kp/v2/config"

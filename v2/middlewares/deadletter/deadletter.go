@@ -30,10 +30,12 @@ func (r deadletter) Process(ctx context.Context, item *kafka.Message, next func(
 	err := next(ctx, item)
 	if err == nil {
 		r.optionals.onSuccess()
+
 		return nil
 	}
 	if retrycounter.GetCount(item) < r.threshold {
 		r.optionals.onRetry(err)
+
 		return err
 	}
 	r.optionals.onDeadLetter(err)

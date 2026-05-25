@@ -32,6 +32,7 @@ func TestTracingMw_Process(t *testing.T) {
 		tracingMiddleware.Process(context.Background(), message, func(ctx context.Context, message2 *kafka.Message) error {
 			traceParent := *kafkaheaders.Get("traceparent", message2)
 			assert.Equal(t, "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01", traceParent)
+
 			return nil
 		})
 		assert.Equal(t, "00-e191a9feec1f18ba0c0d82eb0830a7d8-c611513a9ed84e4d-01", *kafkaheaders.Get("traceparent", message))

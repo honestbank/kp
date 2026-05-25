@@ -9,8 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Shopify/sarama"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama"
+	"github.com/IBM/sarama"
 )
 
 type KP struct {
@@ -67,8 +66,6 @@ func (k *KP) Start(ctx context.Context) error {
 	if err != nil {
 		panic(err)
 	}
-
-	otelsarama.WrapConsumerGroupHandler(k.consumer)
 
 	consumptionIsPaused := false
 	wg := &sync.WaitGroup{}

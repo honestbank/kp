@@ -29,6 +29,7 @@ func (m *mockConsumer) GetMessage() *kafka.Message {
 	if err != nil {
 		return nil
 	}
+
 	return &kafka.Message{
 		Value: encode,
 	}
@@ -44,6 +45,7 @@ func TestConsumerMiddleware_Process(t *testing.T) {
 		msg := kafka.Message{Value: []byte("original-value")}
 		err := middleware.Process(context.Background(), &msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, string(item.Value), string(msg.Value))
+
 			return nil
 		})
 		assert.NoError(t, err)
@@ -58,6 +60,7 @@ func TestConsumerMiddleware_Process(t *testing.T) {
 				return err
 			}
 			assert.Equal(t, 1, decode.Count)
+
 			return nil
 		})
 		assert.NoError(t, err)

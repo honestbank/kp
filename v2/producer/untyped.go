@@ -35,6 +35,7 @@ func NewUntyped(topic string, cfg config.Kafka) (UntypedProducer, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return untypedProducer{
 		producer: p,
 		topic:    topic,

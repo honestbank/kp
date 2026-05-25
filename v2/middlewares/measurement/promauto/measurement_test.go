@@ -22,6 +22,7 @@ func TestMeasure(t *testing.T) {
 		promauto.NewMeasurementMiddleware("integration_test").Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			called = true
 			time.Sleep(time.Millisecond * 550)
+
 			return nil
 		})
 		assert.True(t, called)

@@ -57,10 +57,11 @@ func ExampleNew() {
 		AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(retry_count.NewRetryCountMiddleware()).
 		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
-		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, 3, func(err error) {})).
+		AddMiddleware(deadletter.NewBuilder().OnProduceErrors(func(err error) {}).Build(dltProducer, 3)).
 		Run(func(ctx context.Context, ev *kafka.Message) error {
 			val, _ := serialization.Decode[UserLoggedInEvent](ev.Value)
 			fmt.Printf("%s-%d|", val.UserID, retry_count.FromContext(ctx))
+
 			return errors.New("some error")
 		})
 	if err != nil {

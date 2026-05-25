@@ -26,8 +26,10 @@ func (r *stack[IN, OUT]) Process(ctx context.Context, options IN) OUT {
 	nextMiddleware = func(c context.Context, item IN) OUT {
 		currentMw := middlewares[0]
 		middlewares = middlewares[1:]
+
 		return currentMw.Process(c, item, nextMiddleware)
 	}
+
 	return nextMiddleware(ctx, options)
 }
 

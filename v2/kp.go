@@ -35,7 +35,9 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 
 	for t.getShouldContinue() {
 		ctx := context.Background()
-		_ = t.chain.Process(ctx, nil)
+		if err := t.chain.Process(ctx, nil); err != nil {
+			return err
+		}
 	}
 
 	return nil

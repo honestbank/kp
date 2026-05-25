@@ -19,6 +19,7 @@ func TestBackoff(t *testing.T) {
 		called := false
 		backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(0, 0)).Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
 			called = true
+
 			return nil
 		})
 		assert.True(t, called)

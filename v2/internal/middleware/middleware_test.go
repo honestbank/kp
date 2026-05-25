@@ -12,8 +12,10 @@ import (
 type customMw struct {
 }
 
+type contextKey string
+
 func (r customMw) Process(ctx context.Context, item int, next func(ctx context.Context, item int) int) int {
-	return next(context.WithValue(ctx, "key", "some-value"), item+5)
+	return next(context.WithValue(ctx, contextKey("key"), "some-value"), item+5)
 }
 
 func TestNew(t *testing.T) {
@@ -35,7 +37,8 @@ func TestNew(t *testing.T) {
 		pipeline := middleware.New[int, int]()
 		pipeline.AddMiddleware(customMw{})
 		pipeline.AddMiddleware(middleware.FinalMiddleware[int, int](func(ctx context.Context, item int) int {
-			assert.Equal(t, "some-value", ctx.Value("key"))
+			assert.Equal(t, "some-value", ctx.Value(contextKey("key")))
+
 			return item
 		}))
 		pipeline.Process(context.Background(), 20)

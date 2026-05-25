@@ -5,7 +5,6 @@ package v2_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -30,11 +29,7 @@ type MyMw struct {
 }
 
 func (m MyMw) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
-	fmt.Println("Before:")
-	result := next(ctx, item)
-	fmt.Printf("After with return value: %v\n", result)
-
-	return result
+	return next(ctx, item)
 }
 
 func handleDelivery(ctx context.Context, deliveryChan <-chan kafka.Event) {
@@ -42,21 +37,7 @@ func handleDelivery(ctx context.Context, deliveryChan <-chan kafka.Event) {
 		select {
 		case <-ctx.Done():
 			return
-		case e := <-deliveryChan:
-			switch ev := e.(type) {
-			case kafka.Error:
-				fmt.Println("Kafka error:", ev)
-			case *kafka.Message:
-				tp := ev.TopicPartition
-				if ev.TopicPartition.Error != nil {
-					fmt.Println("Kafka message delivery failed:", tp)
-				}
-				if ev.TopicPartition.Error == nil {
-					fmt.Println("Kafka message delivered:", tp)
-				}
-			default:
-				fmt.Println("Unknown delivery event:", e)
-			}
+		case <-deliveryChan:
 		}
 	}
 }
@@ -108,9 +89,8 @@ func TestKP(t *testing.T) {
 	err = kp.AddMiddleware(consumer.NewConsumerMiddleware(kafkaConsumer)).
 		AddMiddleware(MyMw{}).
 		AddMiddleware(retry.NewRetryMiddleware(retryTopicProducer, func(err error) {})).
-		AddMiddleware(deadletter.NewDeadletterMiddleware(dltProducer, retryCount, func(err error) {})).
+		AddMiddleware(deadletter.NewBuilder().OnProduceErrors(func(err error) {}).Build(dltProducer, retryCount)).
 		Run(func(ctx context.Context, message *kafka.Message) error {
-			fmt.Printf("%v\n", message)
 			messageProcessCount++
 
 			return errors.New("some error")

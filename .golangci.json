@@ -1,71 +1,70 @@
 {
-    "formatters": {
-        "enable": [
-            "gofmt",
-            "goimports"
-        ],
-        "exclusions": {
-            "generated": "lax",
-            "paths": [
-                "graph",
-                ".*/generated/*",
-                "third_party$",
-                "builtin$",
-                "examples$"
-            ]
+  "formatters": {
+    "enable": [
+      "gofmt",
+      "goimports"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "graph",
+        ".*/generated/*",
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ]
+    }
+  },
+  "linters": {
+    "enable": [
+      "asciicheck",
+      "exhaustive",
+      "forbidigo",
+      "gocyclo",
+      "makezero",
+      "misspell",
+      "nakedret",
+      "nestif",
+      "nilerr",
+      "nlreturn",
+      "nolintlint",
+      "testpackage",
+      "unconvert",
+      "wastedassign",
+      "whitespace"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "graph",
+        ".*/generated/*",
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ],
+      "presets": [
+        "comments",
+        "common-false-positives",
+        "legacy",
+        "std-error-handling"
+      ],
+      "rules": [
+        {
+          "linters": [
+            "errcheck"
+          ],
+          "path": "_test.go"
         }
+      ]
     },
-    "linters": {
-        "enable": [
-            "asciicheck",
-            "copyloopvar",
-            "exhaustive",
-            "forbidigo",
-            "gocyclo",
-            "makezero",
-            "misspell",
-            "nakedret",
-            "nestif",
-            "nilerr",
-            "nlreturn",
-            "nolintlint",
-            "testpackage",
-            "unconvert",
-            "wastedassign",
-            "whitespace"
-        ],
-        "exclusions": {
-            "generated": "lax",
-            "paths": [
-                "graph",
-                ".*/generated/*",
-                "third_party$",
-                "builtin$",
-                "examples$"
-            ],
-            "presets": [
-                "comments",
-                "common-false-positives",
-                "legacy",
-                "std-error-handling"
-            ],
-            "rules": [
-                {
-                    "linters": [
-                        "errcheck"
-                    ],
-                    "path": "_test.go"
-                }
-            ]
-        },
-        "settings": {
-            "errcheck": {
-                "check-blank": true
-            }
-        }
-    },
-    "run": {
-        "tests": true
-    },
-    "version": "2"
+    "settings": {
+      "errcheck": {
+        "check-blank": true
+      }
+    }
+  },
+  "run": {
+    "tests": true
+  },
+  "version": "2"
 }

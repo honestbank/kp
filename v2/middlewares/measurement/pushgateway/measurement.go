@@ -2,7 +2,7 @@ package pushgateway
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -25,7 +25,7 @@ func (m measurementMiddleware) SetupBackgroundJob() {
 		for {
 			err := m.pushClient.Push()
 			if err != nil {
-				fmt.Printf("error pushing metrics to gateway: %v\n", err)
+				log.Printf("error pushing metrics to gateway: %v", err)
 			}
 			time.Sleep(time.Second * 5)
 		}

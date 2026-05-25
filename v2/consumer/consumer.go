@@ -37,7 +37,9 @@ func (c consumer) Commit(message *kafka.Message) error {
 
 func New(topics []string, cfg config.Kafka) (Consumer, error) {
 	kafkaConfig := config.GetKafkaConsumerConfig(cfg)
-	_ = kafkaConfig.SetKey("enable.auto.commit", false)
+	if err := kafkaConfig.SetKey("enable.auto.commit", false); err != nil {
+		return nil, err
+	}
 	k, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
 		return nil, err

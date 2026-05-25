@@ -8,6 +8,7 @@ func Set(message *kafka.Message, header string, value string) {
 			continue
 		}
 		message.Headers[i] = kafka.Header{Key: header, Value: []byte(value)}
+
 		return
 	}
 	message.Headers = append(message.Headers, kafka.Header{Key: header, Value: []byte(value)})

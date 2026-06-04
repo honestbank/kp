@@ -11,7 +11,9 @@ func Get(header string, message *kafka.Message) *string {
 			return nil
 		}
 		s := string(h.Value)
+
 		return &s
 	}
+
 	return nil
 }

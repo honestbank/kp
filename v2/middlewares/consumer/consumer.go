@@ -13,7 +13,7 @@ type consumerMiddleware struct {
 	consumer consumer.Consumer
 }
 
-func (c consumerMiddleware) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) error {
+func (c consumerMiddleware) Process(ctx context.Context, item *kafka.Message, next func(ctx context.Context, item *kafka.Message) error) (retErr error) {
 	if item != nil {
 		// I don't think this will ever happen though...
 		return next(ctx, item)
@@ -22,7 +22,11 @@ func (c consumerMiddleware) Process(ctx context.Context, item *kafka.Message, ne
 	if msg == nil {
 		return nil
 	}
-	defer c.consumer.Commit(msg)
+	defer func() {
+		if err := c.consumer.Commit(msg); err != nil && retErr == nil {
+			retErr = err
+		}
+	}()
 
 	return next(ctx, msg)
 }

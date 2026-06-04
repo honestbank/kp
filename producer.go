@@ -3,8 +3,7 @@ package kp
 import (
 	"context"
 
-	"github.com/Shopify/sarama"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama"
+	"github.com/IBM/sarama"
 	"go.opentelemetry.io/otel"
 )
 
@@ -19,6 +18,44 @@ type Producer struct {
 	producer sarama.SyncProducer
 }
 
+// producerMessageCarrier implements propagation.TextMapCarrier for sarama.ProducerMessage.
+type producerMessageCarrier struct {
+	msg *sarama.ProducerMessage
+}
+
+func (c producerMessageCarrier) Get(key string) string {
+	for _, h := range c.msg.Headers {
+		if string(h.Key) == key {
+			return string(h.Value)
+		}
+	}
+
+	return ""
+}
+
+func (c producerMessageCarrier) Set(key string, value string) {
+	for i, h := range c.msg.Headers {
+		if string(h.Key) == key {
+			c.msg.Headers[i].Value = []byte(value)
+
+			return
+		}
+	}
+	c.msg.Headers = append(c.msg.Headers, sarama.RecordHeader{
+		Key:   []byte(key),
+		Value: []byte(value),
+	})
+}
+
+func (c producerMessageCarrier) Keys() []string {
+	keys := make([]string, len(c.msg.Headers))
+	for i, h := range c.msg.Headers {
+		keys[i] = string(h.Key)
+	}
+
+	return keys
+}
+
 func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 	if kpprodcer == nil {
 		saramaConfig := sarama.NewConfig()
@@ -29,7 +66,6 @@ func NewProducer(kafkaConfig KafkaConfig) KPProducer {
 		if err != nil {
 			panic(err)
 		}
-		producer = otelsarama.WrapSyncProducer(saramaConfig, producer)
 
 		return &Producer{
 			producer: producer,
@@ -45,7 +81,7 @@ func (p *Producer) ProduceMessage(ctx context.Context, topic string, key string,
 		Key:   sarama.StringEncoder(key),
 		Value: sarama.StringEncoder(message),
 	}
-	otel.GetTextMapPropagator().Inject(ctx, otelsarama.NewProducerMessageCarrier(messageToProduce))
+	otel.GetTextMapPropagator().Inject(ctx, producerMessageCarrier{msg: messageToProduce})
 	_, _, err := p.producer.SendMessage(messageToProduce)
 	if err != nil {
 		return err

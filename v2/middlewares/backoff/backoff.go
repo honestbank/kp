@@ -19,6 +19,7 @@ func (b backoff) Process(ctx context.Context, item *kafka.Message, next func(ctx
 		err = next(ctx, item)
 		if err != nil {
 			marker.MarkFailure()
+
 			return
 		}
 		marker.MarkSuccess()

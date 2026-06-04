@@ -3,7 +3,7 @@ package kp
 import (
 	"context"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type KafkaProcessor interface {

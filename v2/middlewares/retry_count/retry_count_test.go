@@ -16,6 +16,7 @@ func TestRetryCount(t *testing.T) {
 	t.Run("sets retry count if there's no value at all", func(t *testing.T) {
 		_ = retry_count.NewRetryCountMiddleware().Process(context.Background(), &kafka.Message{}, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 0, retry_count.FromContext(ctx))
+
 			return nil
 		})
 	})
@@ -24,6 +25,7 @@ func TestRetryCount(t *testing.T) {
 		retrycounter.SetCount(message, 50)
 		_ = retry_count.NewRetryCountMiddleware().Process(context.Background(), message, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 50, retry_count.FromContext(ctx))
+
 			return nil
 		})
 	})

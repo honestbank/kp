@@ -19,6 +19,7 @@ func GetCount(message *kafka.Message) int {
 	if err != nil {
 		return 0
 	}
+
 	return count
 }
 

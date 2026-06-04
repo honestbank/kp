@@ -13,7 +13,7 @@ func Encode(message any, schemaID int) ([]byte, error) {
 	}
 	s := serde.BaseSerializer{}
 	val := reflect.ValueOf(message)
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		// avro.TypeOf expects an interface containing a non-pointer
 		message = val.Elem().Interface()
 	}
@@ -25,5 +25,6 @@ func Encode(message any, schemaID int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return payload, nil
 }

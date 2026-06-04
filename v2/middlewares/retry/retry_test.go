@@ -55,14 +55,17 @@ func TestRetry_Process(t *testing.T) {
 		msg := &kafka.Message{}
 		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 0, retrycounter.GetCount(item))
+
 			return errors.New("random error")
 		})
 		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 1, retrycounter.GetCount(item))
+
 			return errors.New("random error")
 		})
 		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 2, retrycounter.GetCount(item))
+
 			return errors.New("random error")
 		})
 	})
@@ -77,6 +80,7 @@ func TestRetry_Process(t *testing.T) {
 		msg := &kafka.Message{}
 		middleware.Process(context.Background(), msg, func(ctx context.Context, item *kafka.Message) error {
 			assert.Equal(t, 0, retrycounter.GetCount(item))
+
 			return errors.New("random error")
 		})
 		assert.True(t, called)

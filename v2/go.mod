@@ -1,6 +1,6 @@
 module github.com/honestbank/kp/v2
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.0.2
@@ -27,7 +27,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	go.opentelemetry.io/otel/trace v1.11.1 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

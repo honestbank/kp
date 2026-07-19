@@ -1,6 +1,8 @@
 # kp
 Library for handing Kafka messages with retries
 
+> **v2** (confluent-kafka-go/librdkafka, middleware chain, schema registry) lives in [`v2/`](v2/README.md). The docs below cover v1 (sarama).
+
 ## How it works
 Each KP instance create a kafka sarama client which will listen to 2 topics: main topic and retry topic. The Retry
 topic will be prepended with the consumer group name such that each instance could have its own retry and dead letter

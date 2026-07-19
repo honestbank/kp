@@ -19,4 +19,19 @@ func TestGetKafkaConfig(t *testing.T) {
 	consumerGroupId, err := withDefaults.Get("group.id", "")
 	assert.NoError(t, err)
 	assert.Equal(t, "cg", consumerGroupId)
+	assignmentStrategy, err := withDefaults.Get("partition.assignment.strategy", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "", assignmentStrategy, "must stay unset so librdkafka's default applies")
+}
+
+func TestGetKafkaConsumerConfig_PartitionAssignmentStrategy(t *testing.T) {
+	strategy := "cooperative-sticky"
+	cfg := config.GetKafkaConsumerConfig(config.Kafka{
+		BootstrapServers:            "localhost",
+		ConsumerGroupName:           "cg",
+		PartitionAssignmentStrategy: &strategy,
+	}.WithDefaults())
+	got, err := cfg.Get("partition.assignment.strategy", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "cooperative-sticky", got)
 }

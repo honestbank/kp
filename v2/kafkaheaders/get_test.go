@@ -14,9 +14,9 @@ func TestGet(t *testing.T) {
 		assert.Nil(t, kafkaheaders.Get("retry-count", &kafka.Message{}))
 	})
 	t.Run("returns nil if the header value is nil", func(t *testing.T) {
-		assert.Nil(t, kafkaheaders.Get("retry-count", &kafka.Message{Headers: []kafka.Header{{"something", []byte("s")}, {"retry-count", nil}}}))
+		assert.Nil(t, kafkaheaders.Get("retry-count", &kafka.Message{Headers: []kafka.Header{{Key: "something", Value: []byte("s")}, {Key: "retry-count", Value: nil}}}))
 	})
 	t.Run("returns value if the header value is nil", func(t *testing.T) {
-		assert.Equal(t, "count", *kafkaheaders.Get("retry-count", &kafka.Message{Headers: []kafka.Header{{"something", []byte("s")}, {"retry-count", []byte("count")}}}))
+		assert.Equal(t, "count", *kafkaheaders.Get("retry-count", &kafka.Message{Headers: []kafka.Header{{Key: "something", Value: []byte("s")}, {Key: "retry-count", Value: []byte("count")}}}))
 	})
 }

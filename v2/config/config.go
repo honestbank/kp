@@ -22,6 +22,7 @@ type Kafka struct {
 	ConnectionsMaxIdleTimeoutMs *int
 	MaxPollIntervalMs           *int
 	Debug                       *string
+	PartitionAssignmentStrategy *string // nil = "range,roundrobin" (librdkafka default)
 }
 
 func (s Kafka) WithDefaults() Kafka {
@@ -39,6 +40,7 @@ func (s Kafka) WithDefaults() Kafka {
 		ConnectionsMaxIdleTimeoutMs: defaultIfNil(s.ConnectionsMaxIdleTimeoutMs, 30000), // Default for librdkafka
 		MaxPollIntervalMs:           defaultIfNil(s.MaxPollIntervalMs, 30000),           // Default for librdkafka
 		Debug:                       s.Debug,
+		PartitionAssignmentStrategy: s.PartitionAssignmentStrategy,
 	}
 }
 
@@ -79,6 +81,7 @@ func GetKafkaConsumerConfig(config Kafka) *kafka.ConfigMap {
 	hydrateIfNotNil(cfg, "group.id", &config.ConsumerGroupName)
 	hydrateIfNotNil(cfg, "auto.offset.reset", config.ConsumerAutoOffsetReset)
 	hydrateIfNotNil(cfg, "session.timeout.ms", config.ConsumerSessionTimeoutMs)
+	hydrateIfNotNil(cfg, "partition.assignment.strategy", config.PartitionAssignmentStrategy)
 	hydrateIfNotNil(cfg, "debug", config.Debug)
 
 	return cfg

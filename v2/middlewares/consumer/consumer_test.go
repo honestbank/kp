@@ -29,14 +29,20 @@ func (m *mockConsumer) GetMessage() *kafka.Message {
 	if err != nil {
 		return nil
 	}
+
 	return &kafka.Message{
 		Value: encode,
 	}
 }
 
-func (m *mockConsumer) Commit(message *kafka.Message) error {
+func (m *mockConsumer) Commit(_ *kafka.Message) error {
 	return nil
 }
+
+func (m *mockConsumer) Close() error {
+	return nil
+}
+
 func TestConsumerMiddleware_Process(t *testing.T) {
 	t.Run("if the message is not nil, it doesn't call GetMessage", func(t *testing.T) {
 		c := &mockConsumer{}

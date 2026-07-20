@@ -22,7 +22,8 @@ type Kafka struct {
 	ConnectionsMaxIdleTimeoutMs *int
 	MaxPollIntervalMs           *int
 	Debug                       *string
-	PartitionAssignmentStrategy *string // nil = "range,roundrobin" (librdkafka default)
+	PartitionAssignmentStrategy *string // nil = "range,roundrobin" (librdkafka default). Ignored when GroupProtocol == "consumer".
+	GroupProtocol               *string // nil = "classic" (librdkafka default). Set "consumer" for the KIP-848 protocol (requires Kafka 4.0+ brokers).
 }
 
 func (s Kafka) WithDefaults() Kafka {
@@ -41,6 +42,7 @@ func (s Kafka) WithDefaults() Kafka {
 		MaxPollIntervalMs:           defaultIfNil(s.MaxPollIntervalMs, 30000),           // Default for librdkafka
 		Debug:                       s.Debug,
 		PartitionAssignmentStrategy: s.PartitionAssignmentStrategy,
+		GroupProtocol:               s.GroupProtocol,
 	}
 }
 
@@ -80,8 +82,15 @@ func GetKafkaConsumerConfig(config Kafka) *kafka.ConfigMap {
 	cfg := GetKafkaConfig(config)
 	hydrateIfNotNil(cfg, "group.id", &config.ConsumerGroupName)
 	hydrateIfNotNil(cfg, "auto.offset.reset", config.ConsumerAutoOffsetReset)
-	hydrateIfNotNil(cfg, "session.timeout.ms", config.ConsumerSessionTimeoutMs)
-	hydrateIfNotNil(cfg, "partition.assignment.strategy", config.PartitionAssignmentStrategy)
+	hydrateIfNotNil(cfg, "group.protocol", config.GroupProtocol)
+
+	// session.timeout.ms and partition.assignment.strategy are client-side only under the
+	// classic protocol. Under the KIP-848 "consumer" protocol they are server-managed, and
+	// setting them client-side makes librdkafka raise a fatal config error.
+	if config.GroupProtocol == nil || *config.GroupProtocol != "consumer" {
+		hydrateIfNotNil(cfg, "session.timeout.ms", config.ConsumerSessionTimeoutMs)
+		hydrateIfNotNil(cfg, "partition.assignment.strategy", config.PartitionAssignmentStrategy)
+	}
 	hydrateIfNotNil(cfg, "debug", config.Debug)
 
 	return cfg

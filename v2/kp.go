@@ -38,7 +38,12 @@ func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {
 		_ = t.chain.Process(ctx, nil)
 	}
 
-	return nil
+	// Loop has stopped polling. Close the chain so resource-holding middlewares
+	// (e.g. the Kafka consumer) release gracefully — the consumer leaves the
+	// group here, letting the broker rebalance immediately. This runs
+	// automatically, so downstream services no longer need a manual
+	// defer kafkaConsumer.Close().
+	return t.chain.Close()
 }
 
 func New[MessageType any]() MessageProcessor[MessageType] {

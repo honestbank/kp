@@ -13,7 +13,7 @@ jobs:
       - run: git config user.name github-actions
       - run: git config user.email github-actions@github.com
       - run: cd docs && npm ci && npm run build
-      - uses: crazy-max/ghaction-github-pages@v2
+      - uses: crazy-max/ghaction-github-pages@59173cb633d9a3514f5f4552a6a3e62c6710355c # v2.7.0
         with:
           target_branch: gh-pages
           build_dir: docs/build

@@ -23,7 +23,7 @@ type Kafka struct {
 	MaxPollIntervalMs           *int
 	Debug                       *string
 	PartitionAssignmentStrategy *string // nil = "range,roundrobin" (librdkafka default). Ignored when GroupProtocol == "consumer".
-	GroupProtocol               *string // nil = "classic" (librdkafka default). Set "consumer" for the KIP-848 protocol (requires Kafka 4.0+ brokers).
+	GroupProtocol               *string // nil defaults (via WithDefaults) to "consumer" — the KIP-848 protocol (requires Kafka 4.0+ brokers). Set "classic" to opt out for older brokers.
 }
 
 func (s Kafka) WithDefaults() Kafka {
@@ -42,7 +42,9 @@ func (s Kafka) WithDefaults() Kafka {
 		MaxPollIntervalMs:           defaultIfNil(s.MaxPollIntervalMs, 30000),           // Default for librdkafka
 		Debug:                       s.Debug,
 		PartitionAssignmentStrategy: s.PartitionAssignmentStrategy,
-		GroupProtocol:               s.GroupProtocol,
+		// Default to the KIP-848 consumer protocol. Requires Kafka 4.0+ brokers;
+		// set GroupProtocol to "classic" explicitly for older brokers.
+		GroupProtocol: defaultIfNil(s.GroupProtocol, "consumer"),
 	}
 }
 

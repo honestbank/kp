@@ -33,9 +33,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Close after Run returns: sends LeaveGroup so the broker rebalances
-	// immediately instead of waiting for session.timeout.ms.
-	defer kafkaConsumer.Close()
+	// No manual Close needed: Run closes the consumer automatically once its
+	// loop returns, sending LeaveGroup so the broker rebalances immediately
+	// instead of waiting for session.timeout.ms.
 
 	processor := v2.New[kafka.Message]()
 	err = processor.
@@ -70,7 +70,7 @@ Retry and dead-letter middlewares are available under `middlewares/retry` and `m
 | `ConnectionsMaxIdleTimeoutMs` | `connections.max.idle.ms` | `30000` |
 | `MaxPollIntervalMs` | `max.poll.interval.ms` | `30000` |
 | `PartitionAssignmentStrategy` | `partition.assignment.strategy` | unset → librdkafka default (`"range,roundrobin"`). Ignored when `GroupProtocol` is `"consumer"`. |
-| `GroupProtocol` | `group.protocol` | unset → librdkafka default (`"classic"`). Set `"consumer"` for the KIP-848 protocol. |
+| `GroupProtocol` | `group.protocol` | **`"consumer"`** — the KIP-848 protocol (requires Kafka 4.0+ brokers). Set `"classic"` explicitly for older brokers. |
 | `Debug` | `debug` | unset |
 
 Pointer fields left `nil` (and not covered by a `WithDefaults()` value above) are never set on the librdkafka config, so librdkafka's own defaults apply.
@@ -81,35 +81,37 @@ Consumers always run with `enable.auto.commit=false`: each message is committed 
 
 ## Graceful shutdown
 
-`processor.Stop()` only stops the polling loop. To leave the consumer group cleanly you must also close the consumer — otherwise the broker waits `session.timeout.ms` (30 s by default) before declaring the pod dead, and the pod's partitions stall for that long on every scale-in or deploy.
+`processor.Stop()` only stops the polling loop. The consumer group must also be left cleanly — otherwise the broker waits `session.timeout.ms` (30 s by default) before declaring the pod dead, and the pod's partitions stall for that long on every scale-in or deploy.
 
-The pattern from the quick start handles this:
+`Run` handles this for you: once its loop returns, it closes every resource-holding middleware in the chain (the consumer middleware among them), so the consumer leaves the group automatically. Just wire `gracefulshutdown.NewSignalMiddleware(processor.Stop)` — no manual `defer kafkaConsumer.Close()` required.
 
 ```
 SIGTERM → Stop() → in-flight message finishes and commits
-        → Run() returns → deferred Close() → LeaveGroup → immediate rebalance
+        → Run() returns → Run closes the chain → consumer LeaveGroup → immediate rebalance
 ```
+
+`consumer.Close()` is idempotent (guarded by `sync.Once`), so any existing `defer kafkaConsumer.Close()` in older code stays safe — upgrading is a version bump with no code change.
 
 On Kubernetes, set `terminationGracePeriodSeconds` greater than your worst-case single-message processing time.
 
 ## Rebalancing (classic vs. KIP-848 consumer protocol)
 
-By default kp consumers use the **classic** rebalance protocol with librdkafka's `range,roundrobin` assignor — the **eager** protocol: on any rebalance (scale in/out, deploy), every consumer revokes all partitions and the whole group pauses until reassignment finishes.
+By default kp consumers use the **KIP-848 consumer protocol** (`group.protocol=consumer`). Assignment is server-driven and incremental — only the partitions that actually move are paused — and it migrates online with a single rolling deploy. This is the default because it is the protocol Kafka is standardising on and it rebalances far more gently under HPA-style scaling.
 
-For workloads that scale often (e.g. HPA), use the **KIP-848 consumer protocol** (`group.protocol=consumer`). Assignment is server-driven and incremental — only the partitions that actually move are paused — and it migrates online with a single rolling deploy.
+**This requires Kafka 4.0+ brokers (or Confluent Cloud).** On an older broker the consumer cannot join the group. Opt out explicitly with the **classic** protocol:
 
 ```go
-protocol := "consumer"
+protocol := "classic"
 cfg := config.Kafka{
 	BootstrapServers:  "...",
 	ConsumerGroupName: "my-service",
-	GroupProtocol:     &protocol,
+	GroupProtocol:     &protocol, // eager range,roundrobin assignor — for brokers < 4.0
 }
 ```
 
 Requirements and notes:
 
-- **Brokers must support KIP-848** — Apache Kafka 4.0+ or Confluent Cloud.
+- **The default requires brokers that support KIP-848** — Apache Kafka 4.0+ or Confluent Cloud. Services on older brokers **must** set `GroupProtocol: "classic"`.
 - Under `group.protocol=consumer`, `session.timeout.ms`, `heartbeat.interval.ms` and `partition.assignment.strategy` are **server-managed**. kp automatically stops sending them (setting them client-side is a fatal librdkafka error), so `ConsumerSessionTimeoutMs` and `PartitionAssignmentStrategy` have no effect in this mode.
 - **Migration is online.** Roll out `group.protocol=consumer` in a single deploy; when the first new pod joins, the group coordinator converts the group automatically and interoperates with any classic members still draining. No two-step dance, no downtime. Rolling back (removing the field) reverts the group once the last consumer-protocol member leaves.
 

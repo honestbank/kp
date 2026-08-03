@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"sync"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"github.com/honestbank/kp/v2/config"
@@ -8,9 +10,11 @@ import (
 
 type consumer struct {
 	kafkaConsumer *kafka.Consumer
+	closeOnce     sync.Once
+	closeErr      error
 }
 
-func (c consumer) GetMessage() *kafka.Message {
+func (c *consumer) GetMessage() *kafka.Message {
 	ev := c.kafkaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
 	if ev == nil {
 		return nil
@@ -29,7 +33,7 @@ func getMessageOrNil(event kafka.Event) *kafka.Message {
 	}
 }
 
-func (c consumer) Commit(message *kafka.Message) error {
+func (c *consumer) Commit(message *kafka.Message) error {
 	_, err := c.kafkaConsumer.CommitMessage(message)
 
 	return err
@@ -37,10 +41,17 @@ func (c consumer) Commit(message *kafka.Message) error {
 
 // Close leaves the consumer group and releases the underlying librdkafka handle.
 // Leaving the group explicitly lets the broker rebalance immediately instead of
-// waiting for session.timeout.ms to expire. Call this only after the processing
-// loop has stopped polling (i.e. after MessageProcessor.Run has returned).
-func (c consumer) Close() error {
-	return c.kafkaConsumer.Close()
+// waiting for session.timeout.ms to expire.
+//
+// kp.Run closes the consumer automatically once its processing loop returns, so
+// callers no longer need a manual defer. Close is idempotent (guarded by
+// sync.Once), so an existing defer kafkaConsumer.Close() remains safe.
+func (c *consumer) Close() error {
+	c.closeOnce.Do(func() {
+		c.closeErr = c.kafkaConsumer.Close()
+	})
+
+	return c.closeErr
 }
 
 func New(topics []string, cfg config.Kafka) (Consumer, error) {
@@ -55,5 +66,5 @@ func New(topics []string, cfg config.Kafka) (Consumer, error) {
 		return nil, err
 	}
 
-	return consumer{kafkaConsumer: k}, nil
+	return &consumer{kafkaConsumer: k}, nil
 }

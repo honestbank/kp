@@ -27,6 +27,14 @@ func (c consumerMiddleware) Process(ctx context.Context, item *kafka.Message, ne
 	return next(ctx, msg)
 }
 
+// Close leaves the consumer group and releases the underlying handle. kp.Run
+// invokes it automatically once the processing loop returns, via the io.Closer
+// interface, so downstream services get graceful group-leave from a version
+// bump alone with no manual defer.
+func (c consumerMiddleware) Close() error {
+	return c.consumer.Close()
+}
+
 func NewConsumerMiddleware(consumer consumer.Consumer) middlewares.KPMiddleware[*kafka.Message] {
 	return &consumerMiddleware{
 		consumer: consumer,

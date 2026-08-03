@@ -49,6 +49,9 @@ func ExampleNew() {
 	if err != nil {
 		panic(err)
 	}
+	// Close after Run returns so the consumer leaves the group immediately,
+	// letting the broker rebalance right away instead of waiting for session.timeout.ms.
+	defer kafkaConsumer.Close()
 	go func() {
 		time.Sleep(time.Second * 10)
 		processor.Stop()

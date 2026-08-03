@@ -7,11 +7,11 @@ import (
 )
 
 type consumer struct {
-	kakfaConsumer *kafka.Consumer
+	kafkaConsumer *kafka.Consumer
 }
 
 func (c consumer) GetMessage() *kafka.Message {
-	ev := c.kakfaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
+	ev := c.kafkaConsumer.Poll(100) // kafka's example uses 100ms and I'm going with it for now
 	if ev == nil {
 		return nil
 	}
@@ -30,9 +30,17 @@ func getMessageOrNil(event kafka.Event) *kafka.Message {
 }
 
 func (c consumer) Commit(message *kafka.Message) error {
-	_, err := c.kakfaConsumer.CommitMessage(message)
+	_, err := c.kafkaConsumer.CommitMessage(message)
 
 	return err
+}
+
+// Close leaves the consumer group and releases the underlying librdkafka handle.
+// Leaving the group explicitly lets the broker rebalance immediately instead of
+// waiting for session.timeout.ms to expire. Call this only after the processing
+// loop has stopped polling (i.e. after MessageProcessor.Run has returned).
+func (c consumer) Close() error {
+	return c.kafkaConsumer.Close()
 }
 
 func New(topics []string, cfg config.Kafka) (Consumer, error) {
@@ -47,5 +55,5 @@ func New(topics []string, cfg config.Kafka) (Consumer, error) {
 		return nil, err
 	}
 
-	return consumer{kakfaConsumer: k}, nil
+	return consumer{kafkaConsumer: k}, nil
 }

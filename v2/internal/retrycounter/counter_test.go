@@ -33,7 +33,7 @@ func TestSetCount(t *testing.T) {
 		retrycounter.SetCount(message, 10)
 		assert.Equal(t, 10, retrycounter.GetCount(message))
 
-		message = &kafka.Message{Headers: []kafka.Header{{"x-temp-val", []byte("sure")}, {Key: "x-retry-count", Value: []byte("5")}}}
+		message = &kafka.Message{Headers: []kafka.Header{{Key: "x-temp-val", Value: []byte("sure")}, {Key: "x-retry-count", Value: []byte("5")}}}
 		retrycounter.SetCount(message, 10)
 		assert.Equal(t, 10, retrycounter.GetCount(message))
 	})

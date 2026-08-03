@@ -100,6 +100,7 @@ func TestKP(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	defer kafkaConsumer.Close()
 
 	go func() {
 		time.Sleep(time.Second * (retryCount / 2))

@@ -48,19 +48,16 @@ func getConfig() any {
 }
 ```
 
-### Interruptible backoff {#interruptible-backoff}
+### Stop ends the wait {#stop-ends-the-wait}
 
-The backoff middleware sleeps, and nothing can end that sleep. After a few failures, a shutdown must wait for the full backoff before the consumer stops.
-`NewInterruptibleBackoffMiddleware` waits the same way, but `Stop` (or a done context) ends the wait, and the message in progress then runs at once.
-It takes a `policies.Policy` and counts the failures itself, as `backoff_policy.NewBackoff` does.
+`MessageProcessor.Stop` ends the backoff wait in progress, and every later wait, so the message in progress runs at once and `Run` returns without the wait.
+This works when the policy is a `backoff_policy.ContextBackoffPolicy`, as the policies of `backoff_policy.NewBackoff` and `backoff_policy.NewExponentialBackoffPolicy` are (backoff-policy v1.4.0 or later).
+A done message context also ends the wait. A policy with `Execute` only waits as before.
 
 ```go
 processor := v2.New[kafka.Message]()
-backoffMiddleware := backoff.NewInterruptibleBackoffMiddleware(policies.GetExponentialPolicy(1.5, time.Millisecond*200, 10))
-processor.AddMiddleware(backoffMiddleware)
+processor.AddMiddleware(backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10)))
 
-stop := func() {
-	processor.Stop()
-	backoffMiddleware.Stop() // the message in progress does not wait for the backoff
-}
+// on shutdown: the message in progress does not wait for the backoff
+processor.Stop()
 ```

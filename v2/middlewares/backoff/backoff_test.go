@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/honestbank/kp/v2/middlewares"
 	"github.com/honestbank/kp/v2/middlewares/backoff"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -49,9 +50,9 @@ func TestBackoff(t *testing.T) {
 }
 
 // waitAfter waits for wait after 1 failure or more, and does not wait with no failures.
-func waitAfter(wait time.Duration) func(failures int) time.Duration {
-	return func(failures int) time.Duration {
-		if failures == 0 {
+func waitAfter(wait time.Duration) func(count int) time.Duration {
+	return func(count int) time.Duration {
+		if count == 0 {
 			return 0
 		}
 
@@ -59,7 +60,16 @@ func waitAfter(wait time.Duration) func(failures int) time.Duration {
 	}
 }
 
-func process(ctx context.Context, mw *backoff.InterruptibleBackoff, err error) (time.Duration, error) {
+// executeOnly is a policy with Execute only, as a policy from before ContextBackoffPolicy.
+type executeOnly struct {
+	p backoff_policy.BackoffPolicy
+}
+
+func (e executeOnly) Execute(cb func(marker backoff_policy.Marker)) {
+	e.p.Execute(cb)
+}
+
+func process(ctx context.Context, mw middlewares.KPMiddleware[*kafka.Message], err error) (time.Duration, error) {
 	start := time.Now()
 	got := mw.Process(ctx, nil, func(ctx context.Context, msg *kafka.Message) error {
 		return err
@@ -68,49 +78,35 @@ func process(ctx context.Context, mw *backoff.InterruptibleBackoff, err error) (
 	return time.Since(start), got
 }
 
-func TestInterruptibleBackoff(t *testing.T) {
-	t.Run("does not wait before the first message and returns what next returns", func(t *testing.T) {
-		mw := backoff.NewInterruptibleBackoffMiddleware(waitAfter(time.Hour))
-		err := errors.New("some error")
+func stop(t *testing.T, mw middlewares.KPMiddleware[*kafka.Message]) func() {
+	t.Helper()
+	stopper, ok := mw.(interface{ Stop() })
+	assert.True(t, ok, "the backoff middleware has Stop")
 
-		took, actualErr := process(context.Background(), mw, err)
+	return stopper.Stop
+}
 
-		assert.Same(t, err, actualErr)
-		assert.Less(t, took, time.Second)
-	})
-
-	t.Run("waits after a failure, and a success takes the failure away", func(t *testing.T) {
-		mw := backoff.NewInterruptibleBackoffMiddleware(waitAfter(100 * time.Millisecond))
+func TestBackoffStop(t *testing.T) {
+	t.Run("Stop ends the wait in progress, and the message still runs with its context", func(t *testing.T) {
+		mw := backoff.NewBackoffMiddleware(backoff_policy.NewBackoff(waitAfter(time.Hour)))
 		_, _ = process(context.Background(), mw, errors.New("some error"))
 
-		took, err := process(context.Background(), mw, nil)
-		assert.NoError(t, err)
-		assert.GreaterOrEqual(t, took, 100*time.Millisecond)
-
-		took, _ = process(context.Background(), mw, nil)
-		assert.Less(t, took, 100*time.Millisecond)
-	})
-
-	t.Run("Stop ends the wait in progress, and the message still runs", func(t *testing.T) {
-		mw := backoff.NewInterruptibleBackoffMiddleware(waitAfter(time.Hour))
-		_, _ = process(context.Background(), mw, errors.New("some error"))
-
-		time.AfterFunc(50*time.Millisecond, mw.Stop)
-		called := false
+		time.AfterFunc(50*time.Millisecond, stop(t, mw))
+		var processCtx context.Context
 		start := time.Now()
 		err := mw.Process(context.Background(), nil, func(ctx context.Context, msg *kafka.Message) error {
-			called = true
+			processCtx = ctx
 
 			return nil
 		})
 
 		assert.NoError(t, err)
-		assert.True(t, called)
 		assert.Less(t, time.Since(start), 5*time.Second)
+		assert.NoError(t, processCtx.Err(), "next gets the context of the message, not the ended wait context")
 	})
 
 	t.Run("a done context ends the wait", func(t *testing.T) {
-		mw := backoff.NewInterruptibleBackoffMiddleware(waitAfter(time.Hour))
+		mw := backoff.NewBackoffMiddleware(backoff_policy.NewBackoff(waitAfter(time.Hour)))
 		_, _ = process(context.Background(), mw, errors.New("some error"))
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
@@ -121,13 +117,23 @@ func TestInterruptibleBackoff(t *testing.T) {
 	})
 
 	t.Run("after Stop, the next messages do not wait, and a second Stop does not panic", func(t *testing.T) {
-		mw := backoff.NewInterruptibleBackoffMiddleware(waitAfter(time.Hour))
+		mw := backoff.NewBackoffMiddleware(backoff_policy.NewBackoff(waitAfter(time.Hour)))
 		_, _ = process(context.Background(), mw, errors.New("some error"))
-		mw.Stop()
-		mw.Stop()
+		stop(t, mw)()
+		stop(t, mw)()
 
 		took, _ := process(context.Background(), mw, errors.New("some error"))
 
 		assert.Less(t, took, 5*time.Second)
+	})
+
+	t.Run("a policy with Execute only still waits, and Stop does not end its wait", func(t *testing.T) {
+		mw := backoff.NewBackoffMiddleware(executeOnly{backoff_policy.NewBackoff(waitAfter(100 * time.Millisecond))})
+		_, _ = process(context.Background(), mw, errors.New("some error"))
+		stop(t, mw)()
+
+		took, _ := process(context.Background(), mw, nil)
+
+		assert.GreaterOrEqual(t, took, 100*time.Millisecond)
 	})
 }

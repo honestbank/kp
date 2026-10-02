@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.15.0
 	github.com/heetch/avro v0.4.79
-	github.com/honestbank/backoff-policy v1.3.1-0.20261002073715-d30cb0f5ab4f
+	github.com/honestbank/backoff-policy v1.4.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.45.0

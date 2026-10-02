@@ -41,8 +41,8 @@ func (r *stack[IN, OUT]) AddMiddleware(mw Middleware[IN, OUT]) {
 	r.middlewares = append(r.middlewares, mw)
 }
 
-// snapshot returns a copy of the middlewares, so that the caller does not hold the lock while they run.
-func (r *stack[IN, OUT]) snapshot() []Middleware[IN, OUT] {
+// copyMiddlewares returns a copy of the middlewares, so that the caller does not hold the lock while they run.
+func (r *stack[IN, OUT]) copyMiddlewares() []Middleware[IN, OUT] {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	middlewares := make([]Middleware[IN, OUT], len(r.middlewares))
@@ -53,7 +53,7 @@ func (r *stack[IN, OUT]) snapshot() []Middleware[IN, OUT] {
 
 func (r *stack[IN, OUT]) Process(ctx context.Context, options IN) OUT {
 	var nextMiddleware func(c context.Context, item IN) OUT = nil
-	middlewares := r.snapshot()
+	middlewares := r.copyMiddlewares()
 	nextMiddleware = func(c context.Context, item IN) OUT {
 		currentMw := middlewares[0]
 		middlewares = middlewares[1:]
@@ -67,7 +67,7 @@ func (r *stack[IN, OUT]) Process(ctx context.Context, options IN) OUT {
 // are skipped.
 func (r *stack[IN, OUT]) Close() error {
 	var errs []error
-	for _, mw := range r.snapshot() {
+	for _, mw := range r.copyMiddlewares() {
 		if closer, ok := mw.(io.Closer); ok {
 			if err := closer.Close(); err != nil {
 				errs = append(errs, err)
@@ -81,7 +81,7 @@ func (r *stack[IN, OUT]) Close() error {
 // Stop stops every middleware in the chain that has a Stop method, in the order they were added. The other
 // middlewares are skipped.
 func (r *stack[IN, OUT]) Stop() {
-	for _, mw := range r.snapshot() {
+	for _, mw := range r.copyMiddlewares() {
 		if s, ok := mw.(stopper); ok {
 			s.Stop()
 		}

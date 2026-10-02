@@ -127,6 +127,19 @@ func TestBackoffStop(t *testing.T) {
 		assert.Less(t, took, 5*time.Second)
 	})
 
+	t.Run("Stop is safe while messages run in another goroutine", func(t *testing.T) {
+		mw := backoff.NewBackoffMiddleware(backoff_policy.NewBackoff(waitAfter(time.Millisecond)))
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for range 50 {
+				_, _ = process(context.Background(), mw, errors.New("some error"))
+			}
+		}()
+		stop(t, mw)()
+		<-done
+	})
+
 	t.Run("a policy with Execute only still waits, and Stop does not end its wait", func(t *testing.T) {
 		mw := backoff.NewBackoffMiddleware(executeOnly{backoff_policy.NewBackoff(waitAfter(100 * time.Millisecond))})
 		_, _ = process(context.Background(), mw, errors.New("some error"))

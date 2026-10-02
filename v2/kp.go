@@ -26,6 +26,9 @@ func (t *kp[MessageType]) AddMiddleware(middleware middleware.Middleware[*Messag
 
 func (t *kp[MessageType]) Stop() {
 	t.shouldContinue.Store(false)
+	// A middleware that waits, such as the backoff, ends its wait, so that the message in progress runs at once
+	// and Run returns without the wait.
+	t.chain.Stop()
 }
 
 func (t *kp[MessageType]) Run(processor Processor[MessageType]) error {

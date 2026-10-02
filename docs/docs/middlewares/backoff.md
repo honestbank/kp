@@ -47,3 +47,17 @@ func getConfig() any {
 	return nil // return your config
 }
 ```
+
+### Stop ends the wait {#stop-ends-the-wait}
+
+`MessageProcessor.Stop` ends the backoff wait in progress, and every later wait, so the message in progress runs at once and `Run` returns without the wait.
+This works when the policy is a `backoff_policy.ContextBackoffPolicy`, as the policies of `backoff_policy.NewBackoff` and `backoff_policy.NewExponentialBackoffPolicy` are (backoff-policy v1.4.0 or later).
+A done message context also ends the wait. A policy with `Execute` only waits as before.
+
+```go
+processor := v2.New[kafka.Message]()
+processor.AddMiddleware(backoff.NewBackoffMiddleware(backoff_policy.NewExponentialBackoffPolicy(time.Millisecond*200, 10)))
+
+// on shutdown: the message in progress does not wait for the backoff
+processor.Stop()
+```

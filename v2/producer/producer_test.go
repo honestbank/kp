@@ -111,6 +111,21 @@ func TestNew(t *testing.T) {
 			assert.NoError(t, err)
 		}
 	})
+	t.Run("close delivers what the producer holds, then ends its events", func(t *testing.T) {
+		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
+		assert.NoError(t, err)
+		assert.NoError(t, kp.Produce(context.Background(), BenchmarkMessage{Body: "hello-world"}))
+
+		kp.Close()
+
+		delivered := 0
+		for event := range kp.Events() {
+			if message, ok := event.(*kafka.Message); ok && message.TopicPartition.Error == nil {
+				delivered++
+			}
+		}
+		assert.Equal(t, 1, delivered)
+	})
 	t.Run("produce through kp with keys", func(t *testing.T) {
 		kp, err := producer.New[BenchmarkMessage]("topic-kp", cfg)
 		assert.NoError(t, err)
@@ -123,5 +138,24 @@ func TestNew(t *testing.T) {
 			})
 			assert.NoError(t, err)
 		}
+	})
+}
+
+func TestNewUntyped(t *testing.T) {
+	t.Run("close delivers what the producer holds, then ends its events", func(t *testing.T) {
+		p, err := producer.NewUntyped("topic-kp", config.Kafka{BootstrapServers: "localhost"}.WithDefaults())
+		assert.NoError(t, err)
+		assert.NoError(t, p.ProduceRaw(&kafka.Message{Value: []byte("hello-world")}))
+
+		p.Close()
+		p.Close()
+
+		delivered := 0
+		for event := range p.Events() {
+			if message, ok := event.(*kafka.Message); ok && message.TopicPartition.Error == nil {
+				delivered++
+			}
+		}
+		assert.Equal(t, 1, delivered)
 	})
 }

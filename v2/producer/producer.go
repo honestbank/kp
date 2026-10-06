@@ -54,6 +54,10 @@ func (p producer[BodyType]) Events() <-chan kafka.Event {
 	return p.k.Events()
 }
 
+func (p producer[BodyType]) Close() {
+	p.k.Close()
+}
+
 func (p producer[BodyType]) ProduceRaw(message *kafka.Message) error {
 	return p.k.ProduceRaw(message)
 }

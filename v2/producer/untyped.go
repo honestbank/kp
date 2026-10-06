@@ -30,6 +30,14 @@ func (u untypedProducer) Events() <-chan kafka.Event {
 	return u.producer.Events()
 }
 
+func (u untypedProducer) Close() {
+	if u.producer.IsClosed() {
+		return
+	}
+	u.Flush()
+	u.producer.Close()
+}
+
 func NewUntyped(topic string, cfg config.Kafka) (UntypedProducer, error) {
 	p, err := kafka.NewProducer(config.GetKafkaConfig(cfg))
 	if err != nil {

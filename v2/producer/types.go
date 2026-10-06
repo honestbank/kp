@@ -7,14 +7,16 @@ import (
 )
 
 type Producer[BodyType any] interface {
+	Close()
+	Events() <-chan kafka.Event
 	Flush() error
 	Produce(context context.Context, message BodyType) error
 	ProduceRaw(message *kafka.Message) error
-	Events() <-chan kafka.Event
 }
 
 type UntypedProducer interface {
-	ProduceRaw(message *kafka.Message) error
-	Flush() error
+	Close()
 	Events() <-chan kafka.Event
+	Flush() error
+	ProduceRaw(message *kafka.Message) error
 }

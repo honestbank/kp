@@ -3,7 +3,7 @@ module github.com/honestbank/kp_demo
 go 1.26.0
 
 require (
-	github.com/confluentinc/confluent-kafka-go/v2 v2.15.1
+	github.com/confluentinc/confluent-kafka-go/v2 v2.16.0
 	github.com/honestbank/kp/v2 v2.0.0-20221109093135-5309f3d29232
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.11.1
@@ -32,6 +32,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
